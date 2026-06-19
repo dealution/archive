@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="description" content="Archive: a focused habit, journal, and time tracker." />
+    <link rel="manifest" href="./manifest.webmanifest?v=66" />
+    <link rel="icon" href="./icon-192.png?v=26" type="image/png" />
+    <link rel="apple-touch-icon" href="./icon-192.png?v=26" />
+    <link rel="stylesheet" href="./styles.css?v=66" />
+    <title>Archive</title>
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+
+    <div class="splash" id="splash" aria-hidden="true">
+      <div class="logo-intro">
+        <div class="intro-logo-shell">
+          <img class="intro-logo-png" src="./app-logo.png" alt="" />
+          <div class="intro-logo-copy">
+            <strong data-intro-text="ARCHIVE.SYS" data-intro-delay="470"></strong>
+            <span class="intro-memory-label" data-intro-text="MEMORY INDEX // ONLINE" data-intro-delay="650"></span>
+            <span class="intro-ready-label" data-intro-text="STATUS // READY" data-intro-delay="820"></span>
+          </div>
+          <i class="intro-core-pulse" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>
+
+    <main class="app-shell" id="app">
+      <header class="topbar">
+        <div class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></div>
+        <button class="brand" data-screen="home" aria-label="Go home">
+          <img class="brand-logo" src="./app-logo.png" alt="" />
+          <span class="prompt">ARCHIVE</span>
+          <span id="top-screen-name">HOME</span>
+        </button>
+        <div class="topbar-actions">
+          <button class="topbar-access timer-access" data-screen="timer" aria-label="Open timer"><span class="topbar-icon">[T]</span><span>TIMER</span></button>
+          <button class="topbar-access config-access" data-screen="settings" aria-label="Open configuration"><span class="topbar-icon">[C]</span><span>CONFIG</span></button>
+        </div>
+      </header>
+
+      <section class="screen-stage" id="screen-stage">
+        <section class="screen active" id="home-screen" data-screen-name="home" aria-labelledby="home-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow" id="today-label">TODAY // --</p>
+              <h1 id="home-title">Daily protocol</h1>
+            </div>
+            <div class="completion-dial" id="completion-dial" style="--progress: 0" aria-label="0 percent complete">
+              <svg viewBox="0 0 52 52" aria-hidden="true">
+                <rect class="completion-track" x="3" y="3" width="46" height="46" pathLength="100"></rect>
+                <rect class="completion-progress-line" id="completion-progress-line" x="3" y="3" width="46" height="46" pathLength="100"></rect>
+              </svg>
+              <span id="completion-percent">0%</span>
+            </div>
+          </div>
+
+          <div class="home-core" id="home-core">
+            <button class="home-memory" id="home-memory-portal" type="button" aria-label="Enter the Library of Babel">
+              <div class="memory-shelf"><span class="mini-books" id="home-mini-books"></span></div>
+              <span class="memory-enter">ENTER LIBRARY</span>
+            </button>
+
+            <div class="panel protocol-panel">
+              <div class="panel-header">
+                <span>TODAY'S CHECKLIST</span>
+                <span id="habit-count">0/0 COMPLETE</span>
+              </div>
+              <div class="inline-tab-control home-group-control" id="home-group-control" data-home-group-control>
+                <button class="inline-tab-toggle" data-home-group-toggle type="button">SECTIONS</button>
+                <div class="inline-tab-options" hidden>
+                  <button data-home-group-visibility="commitment" type="button">COMMITMENTS</button>
+                  <button data-home-group-visibility="restraint" type="button">RESTRAINTS</button>
+                </div>
+              </div>
+              <ul class="habit-list" id="habit-list"></ul>
+              <form class="command-form" id="habit-form">
+                <span class="prompt">&gt;_</span>
+                <input id="habit-input" maxlength="52" autocomplete="off" placeholder="append habit..." aria-label="New habit" />
+                <button type="submit">EXEC</button>
+              </form>
+            </div>
+
+            <nav class="home-launchpad" aria-label="App areas">
+              <button data-screen="journal" data-home-tab="journal"><span>01</span><strong>JOURNAL</strong><small id="home-journal-state">WRITE TODAY</small></button>
+              <button data-screen="archive" data-home-tab="archive"><span>02</span><strong>ARCHIVE</strong><small id="home-archive-state">0 BOOKS</small></button>
+              <button data-screen="body" data-home-tab="body"><span>03</span><strong>BODY</strong><small id="home-body-state">NO CHECK-INS</small></button>
+              <button data-screen="focus" data-home-tab="focus"><span>04</span><strong>FOCUS</strong><small id="home-focus-state">0 ACTIVE</small></button>
+            </nav>
+          </div>
+        </section>
+
+        <section class="screen" id="journal-screen" data-screen-name="journal" aria-labelledby="journal-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">JOURNAL</p>
+              <h1 id="journal-title">Journal</h1>
+            </div>
+            <span class="heading-code">[JRN]</span>
+          </div>
+
+          <form class="panel journal-form" id="journal-form">
+            <div class="panel-header"><span>NEW_ENTRY</span><span id="journal-date-label"></span></div>
+            <label>
+              <span>TODAY'S NOTES</span>
+              <textarea id="journal-body" rows="8"></textarea>
+            </label>
+            <label>
+              <span>MESSAGE FOR TOMORROW</span>
+              <textarea id="future-note" rows="3" maxlength="360"></textarea>
+            </label>
+            <button class="primary-button" id="journal-save" type="submit">SAVE ENTRY</button>
+          </form>
+
+          <div class="panel future-panel" id="future-panel">
+            <div class="panel-header"><span>INCOMING_MESSAGE</span><span>FROM_PAST_YOU</span></div>
+            <p id="past-note"></p>
+          </div>
+        </section>
+
+        <section class="screen" id="archive-screen" data-screen-name="archive" aria-labelledby="archive-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">ARCHIVE</p>
+              <h1 id="archive-title">Archive</h1>
+            </div>
+            <span class="heading-code">[ALL]</span>
+          </div>
+
+          <div class="archive-summary" id="archive-summary"></div>
+          <label class="archive-search">
+            <span>&gt; SEARCH.ALL</span>
+            <input id="archive-search" type="search" autocomplete="off" placeholder="words, notes, projects, or date..." />
+          </label>
+          <div class="archive-tabs" role="tablist" aria-label="Archive views">
+            <button class="active" data-archive-tab="days" role="tab">WEEKS</button>
+            <button data-archive-tab="routines" role="tab">ROUTINES</button>
+            <button data-archive-tab="reviews" role="tab">REVIEWS</button>
+          </div>
+          <div class="inline-tab-control archive-tab-control" data-inline-tab-control="archive">
+            <button class="inline-tab-toggle" data-inline-tab-toggle="archive" type="button">SUB-TABS</button>
+            <div class="inline-tab-options" hidden>
+              <button data-area-visibility="archiveDays" data-area-group="archive" type="button">WEEKS</button>
+              <button data-area-visibility="archiveRoutines" data-area-group="archive" type="button">ROUTINES</button>
+              <button data-area-visibility="archiveReviews" data-area-group="archive" type="button">REVIEWS</button>
+            </div>
+          </div>
+          <div class="archive-pane active" id="archive-days-pane">
+            <div class="archive-list" id="archive-list"></div>
+          </div>
+          <div class="archive-pane" id="archive-schedule-pane">
+            <div class="habit-schedule" id="habit-schedule"></div>
+          </div>
+          <div class="archive-pane" id="archive-reviews-pane">
+            <div class="weekly-reviews" id="weekly-reviews"></div>
+          </div>
+        </section>
+
+        <section class="screen library-screen" id="library-screen" data-screen-name="library" aria-labelledby="library-title">
+          <h1 class="visually-hidden" id="library-title">Library of Babel</h1>
+          <div class="library-stage" id="library-stage"></div>
+        </section>
+
+        <section class="screen" id="timer-screen" data-screen-name="timer" aria-labelledby="timer-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">TIMER</p>
+              <h1 id="timer-title">Timer</h1>
+            </div>
+            <span class="heading-code">[RUN]</span>
+          </div>
+
+          <div class="segmented-control" role="tablist" aria-label="Timer mode">
+            <button class="active" id="focus-tab" data-timer-tab="focus" role="tab">COUNTDOWN</button>
+            <button id="track-tab" data-timer-tab="track" role="tab">OPEN TRACKER</button>
+          </div>
+
+          <div class="timer-pane active" id="focus-pane">
+            <div class="panel timer-panel">
+              <label class="timer-label" for="focus-habit-trigger">HABIT TO TRAIN</label>
+              <div class="habit-picker" data-habit-picker="focus-habit">
+                <input type="hidden" id="focus-habit" />
+                <button class="habit-picker-trigger" id="focus-habit-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span>CREATE A HABIT FIRST</span><i aria-hidden="true">+</i>
+                </button>
+                <div class="habit-picker-menu" id="focus-habit-menu" role="listbox" hidden></div>
+              </div>
+              <input class="timer-readout timer-readout-input" id="focus-readout" inputmode="numeric" maxlength="8" value="00:00:00" aria-label="Timer duration. Tap to edit." />
+              <p class="timer-edit-hint">TAP TIME TO EDIT // HH:MM:SS</p>
+              <div class="timer-progress"><span id="focus-progress"></span></div>
+              <div class="timer-controls">
+                <button class="primary-button" id="focus-toggle" type="button">START</button>
+                <button class="ghost-button" id="focus-reset" type="button">SAVE &amp; RESET</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="timer-pane" id="track-pane">
+            <div class="panel timer-panel">
+              <label class="timer-label" for="track-habit-trigger">HABIT TO TRACK</label>
+              <div class="habit-picker" data-habit-picker="track-habit">
+                <input type="hidden" id="track-habit" />
+                <button class="habit-picker-trigger" id="track-habit-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span>CREATE A HABIT FIRST</span><i aria-hidden="true">+</i>
+                </button>
+                <div class="habit-picker-menu" id="track-habit-menu" role="listbox" hidden></div>
+              </div>
+              <div class="timer-readout" id="track-readout">00:00:00</div>
+              <div class="timer-controls">
+                <button class="primary-button" id="track-toggle" type="button">START</button>
+                <button class="ghost-button" id="track-save" type="button">SAVE LOG</button>
+              </div>
+            </div>
+            <div class="panel log-panel">
+              <div class="panel-header"><span>TODAY'S_LOGS</span><span id="tracked-total">00:00:00</span></div>
+              <ul id="time-log-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="body-screen" data-screen-name="body" aria-labelledby="body-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">BODY</p>
+              <h1 id="body-title">Body</h1>
+            </div>
+            <span class="heading-code">[PHY]</span>
+          </div>
+
+          <div class="body-summary" id="body-summary"></div>
+          <div class="inline-tab-control summary-edit-control" id="body-summary-control" data-summary-control="body">
+            <button class="inline-tab-toggle" data-summary-toggle="body" type="button">CARDS</button>
+            <div class="inline-tab-options" hidden>
+              <button data-body-summary-visibility="weight" type="button">WEIGHT</button>
+              <button data-body-summary-visibility="bodyFat" type="button">BODY FAT</button>
+              <button data-body-summary-visibility="plans" type="button">PLANS</button>
+            </div>
+          </div>
+
+          <div class="segmented-control body-tabs" role="tablist" aria-label="Body area">
+            <button class="active" data-body-tab="workouts" role="tab">WORKOUT PLANS</button>
+            <button data-body-tab="metrics" role="tab">BODY LOG</button>
+            <button data-body-tab="prs" role="tab">PR LOG</button>
+            <button data-body-tab="calories" role="tab">KCAL</button>
+          </div>
+          <div class="inline-tab-control" data-inline-tab-control="body">
+            <button class="inline-tab-toggle" data-inline-tab-toggle="body" type="button">SUB-TABS</button>
+            <div class="inline-tab-options" hidden>
+              <button data-area-visibility="bodyWorkouts" data-area-group="body" type="button">WORKOUTS</button>
+              <button data-area-visibility="bodyMetrics" data-area-group="body" type="button">LOG</button>
+              <button data-area-visibility="bodyPrs" data-area-group="body" type="button">PR</button>
+              <button data-area-visibility="bodyCalories" data-area-group="body" type="button">KCAL</button>
+            </div>
+          </div>
+
+          <div class="body-pane active" id="body-workouts-pane">
+            <form class="panel body-form" id="workout-plan-form" data-edit-surface>
+              <div class="panel-header"><span>WORKOUT.PLAN</span><span>REUSABLE</span></div>
+              <label>
+                <span>PLAN NAME</span>
+                <input id="workout-plan-name" maxlength="52" autocomplete="off" placeholder="Push day" required />
+              </label>
+              <label>
+                <span>EXERCISES / NOTES</span>
+                <textarea id="workout-plan-details" rows="7" maxlength="1200" placeholder="Bench press // 4 x 8&#10;Incline press // 3 x 10&#10;Rest // 90 sec" required></textarea>
+              </label>
+              <button class="primary-button" id="workout-plan-save" type="submit">SAVE PLAN</button>
+            </form>
+            <div class="workout-plan-list" id="workout-plan-list"></div>
+          </div>
+
+          <div class="body-pane" id="body-metrics-pane">
+            <div class="body-log-model" id="body-log-model"></div>
+            <div class="body-field-control" id="body-field-control"></div>
+            <form class="panel body-form metrics-form" id="body-metric-form">
+              <div class="panel-header"><span>BODY.CHECK_IN</span><span>OPTIONAL FIELDS</span></div>
+              <div class="metric-grid">
+                <label data-body-field="height"><span>HEIGHT</span><input id="body-height" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="weight"><span>WEIGHT</span><input id="body-weight" type="number" inputmode="decimal" min="0" step="0.1" placeholder="kg" /></label>
+                <label data-body-field="bodyFat"><span>BODY FAT</span><input id="body-fat" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="%" /></label>
+                <label data-body-field="neck"><span>NECK</span><input id="body-neck" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="shoulders"><span>SHOULDERS</span><input id="body-shoulders" type="number" inputmode="decimal" min="0" step="0.1" placeholder="width cm" /></label>
+                <label data-body-field="waist"><span>WAIST</span><input id="body-waist" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="chest"><span>CHEST</span><input id="body-chest" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="hips"><span>HIPS</span><input id="body-hips" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="arm"><span>ARM</span><input id="body-arm" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="forearm"><span>FOREARM</span><input id="body-forearm" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="thigh"><span>THIGH</span><input id="body-thigh" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+                <label data-body-field="calf"><span>CALF</span><input id="body-calf" type="number" inputmode="decimal" min="0" step="0.1" placeholder="cm" /></label>
+              </div>
+              <label>
+                <span>NOTE</span>
+                <input id="body-note" maxlength="180" placeholder="Energy, recovery, context..." />
+              </label>
+              <button class="primary-button" type="submit">SAVE CHECK-IN</button>
+            </form>
+            <div class="body-history" id="body-history"></div>
+          </div>
+
+          <div class="body-pane" id="body-prs-pane">
+            <form class="panel body-form pr-form" id="pr-form">
+              <div class="panel-header"><span>PR.LOG</span><span>REPS // WEIGHT</span></div>
+              <div class="pr-form-grid">
+                <label><span>MOVEMENT</span><input id="pr-movement" list="pr-movement-options" maxlength="52" autocomplete="off" placeholder="Pull-up" required /></label>
+                <label><span>MAX REPS</span><input id="pr-reps" type="number" inputmode="numeric" min="0" step="1" placeholder="12" /></label>
+                <label><span>MAX WEIGHT // KG</span><input id="pr-weight" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" /></label>
+              </div>
+              <datalist id="pr-movement-options"></datalist>
+              <label><span>NOTE</span><input id="pr-note" maxlength="180" placeholder="Form standard, load, range, context..." /></label>
+              <button class="primary-button" type="submit">LOG PR</button>
+            </form>
+            <div class="pr-board" id="pr-board"></div>
+          </div>
+
+          <div class="body-pane" id="body-calories-pane">
+            <div class="calorie-dashboard" id="calorie-dashboard"></div>
+            <form class="panel body-form calorie-goals-form" id="calorie-goals-form" data-edit-surface>
+              <div class="panel-header"><span>ENERGY.TARGETS</span><span>EDIT MODE</span></div>
+              <div class="calorie-form-grid">
+                <label><span>DAILY GOAL // KCAL</span><input id="calorie-target" type="number" inputmode="numeric" min="0" step="1" placeholder="2200" required /></label>
+                <label><span>MAINTENANCE // KCAL</span><input id="calorie-maintenance" type="number" inputmode="numeric" min="0" step="1" placeholder="2600" required /></label>
+              </div>
+              <button class="primary-button" id="calorie-goals-save" type="submit">SAVE TARGETS</button>
+            </form>
+            <div class="calorie-entry-grid">
+              <section class="calorie-entry-column calorie-activity-column">
+                <form class="panel body-form calorie-activity-form" id="calorie-activity-form">
+                  <div class="panel-header"><span>ADD.ACTIVITY</span><span>BURN</span></div>
+                  <div class="calorie-form-grid">
+                    <label><span>ACTIVITY</span><input id="calorie-activity-name" maxlength="52" autocomplete="off" placeholder="Long walk" required /></label>
+                    <label><span>CALORIES BURNED</span><input id="calorie-activity-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="320" required /></label>
+                  </div>
+                  <label><span>NOTE</span><input id="calorie-activity-note" maxlength="180" placeholder="Duration, distance..." /></label>
+                  <button class="primary-button" id="calorie-activity-save" type="submit">ADD ACTIVITY</button>
+                </form>
+                <div class="calorie-column-label"><span>ACTIVITIES</span><small>EXTRA BURN</small></div>
+                <div class="calorie-activity-list" id="calorie-activity-list"></div>
+              </section>
+              <section class="calorie-entry-column calorie-meal-column">
+                <form class="panel body-form calorie-meal-form" id="calorie-meal-form">
+                  <div class="panel-header"><span>ADD.MEAL</span><span>INTAKE</span></div>
+                  <div class="calorie-form-grid">
+                    <label><span>MEAL</span><input id="calorie-meal-name" maxlength="52" autocomplete="off" placeholder="Lunch" required /></label>
+                    <label><span>CALORIES</span><input id="calorie-meal-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="650" required /></label>
+                    <label><span>PROTEIN // G</span><input id="calorie-meal-protein" type="number" inputmode="decimal" min="0" step="1" placeholder="45" /></label>
+                  </div>
+                  <label><span>NOTE</span><input id="calorie-meal-note" maxlength="180" placeholder="Food quality..." /></label>
+                  <button class="primary-button" id="calorie-meal-save" type="submit">ADD MEAL</button>
+                </form>
+                <div class="calorie-column-label"><span>MEALS</span><small>DAILY INTAKE</small></div>
+                <div class="calorie-meal-list" id="calorie-meal-list"></div>
+              </section>
+            </div>
+            <div class="calorie-history" id="calorie-history"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="focus-screen" data-screen-name="focus" aria-labelledby="focus-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">FOCUS</p>
+              <h1 id="focus-title">Focus</h1>
+            </div>
+            <span class="heading-code">[OPS]</span>
+          </div>
+
+          <div class="focus-summary" id="focus-summary"></div>
+          <div class="inline-tab-control summary-edit-control" id="focus-summary-control" data-summary-control="focus">
+            <button class="inline-tab-toggle" data-summary-toggle="focus" type="button">CARDS</button>
+            <div class="inline-tab-options" hidden>
+              <button data-focus-summary-visibility="projects" type="button">PROJECTS</button>
+              <button data-focus-summary-visibility="today" type="button">TODAY</button>
+              <button data-focus-summary-visibility="income" type="button">INCOME</button>
+            </div>
+          </div>
+
+          <div class="segmented-control focus-tabs" role="tablist" aria-label="Focus command center">
+            <button data-focus-tab="projects" role="tab">PROJECT</button>
+            <button data-focus-tab="skills" role="tab">SKILL</button>
+            <button class="active" data-focus-tab="logs" role="tab">OUTPUT</button>
+            <button data-focus-tab="review" role="tab">REVIEW</button>
+          </div>
+          <div class="inline-tab-control" data-inline-tab-control="focus">
+            <button class="inline-tab-toggle" data-inline-tab-toggle="focus" type="button">SUB-TABS</button>
+            <div class="inline-tab-options" hidden>
+              <button data-area-visibility="focusProjects" data-area-group="focus" type="button">PROJECT</button>
+              <button data-area-visibility="focusSkills" data-area-group="focus" type="button">SKILL</button>
+              <button data-area-visibility="focusLogs" data-area-group="focus" type="button">OUTPUT</button>
+              <button data-area-visibility="focusReview" data-area-group="focus" type="button">REVIEW</button>
+            </div>
+          </div>
+
+          <div class="focus-pane" id="focus-projects-pane">
+            <form class="panel focus-form" id="project-form" data-edit-surface>
+              <div class="panel-header"><span>PROJECT.STATE</span><span>COMMAND CENTER</span></div>
+              <label><span>PROJECT NAME</span><input id="project-name" maxlength="64" autocomplete="off" placeholder="Launch the next release" required /></label>
+              <label><span>DEFINED OUTCOME</span><textarea id="project-outcome" rows="4" maxlength="500" placeholder="What does finished look like?"></textarea></label>
+              <label><span>CURRENT STATE</span>
+                <select id="project-status">
+                  <option value="active">ACTIVE</option>
+                  <option value="waiting">WAITING</option>
+                  <option value="complete">COMPLETE</option>
+                </select>
+              </label>
+              <button class="primary-button" type="submit">SAVE PROJECT</button>
+            </form>
+            <div class="project-list" id="project-list"></div>
+          </div>
+
+          <div class="focus-pane active" id="focus-logs-pane">
+            <form class="panel focus-form" id="focus-log-form">
+              <div class="panel-header"><span>OUTPUT.LOG</span><span>ARCHIVED BY DATE</span></div>
+              <div class="focus-log-grid">
+                <label><span>PROJECT / SKILL</span><select id="focus-log-target"><option value="">GENERAL OUTPUT</option></select></label>
+                <label><span>FOCUS MINUTES</span><input id="focus-log-minutes" type="number" inputmode="numeric" min="0" step="1" placeholder="90" /></label>
+                <label><span>INCOME</span><input id="focus-log-income" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" /></label>
+              </div>
+              <label><span>FINISHED OUTPUT</span><textarea id="focus-log-output" rows="4" maxlength="700" placeholder="What concrete result did you produce?" required></textarea></label>
+              <label><span>NOTE</span><input id="focus-log-note" maxlength="180" placeholder="Decision, blocker, or next move..." /></label>
+              <button class="primary-button" type="submit">ARCHIVE OUTPUT</button>
+            </form>
+            <div class="focus-log-list" id="focus-log-list"></div>
+          </div>
+
+          <div class="focus-pane" id="focus-skills-pane">
+            <form class="panel focus-form" id="skill-form" data-edit-surface>
+              <div class="panel-header"><span>SKILL.MAP</span><span>CAPABILITY</span></div>
+              <label><span>SKILL</span><input id="skill-name" maxlength="64" autocomplete="off" placeholder="Product design" required /></label>
+              <label><span>PROGRESS // 0-100</span><input id="skill-progress" type="number" inputmode="numeric" min="0" max="100" step="1" placeholder="40" /></label>
+              <label><span>LEARNING NOTE</span><input id="skill-note" maxlength="180" placeholder="What are you practicing next?" /></label>
+              <button class="primary-button" type="submit">ADD SKILL</button>
+            </form>
+            <div class="skill-list" id="skill-list"></div>
+          </div>
+
+          <div class="focus-pane" id="focus-review-pane">
+            <div class="focus-review" id="focus-review"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="settings-screen" data-screen-name="settings" aria-labelledby="settings-title">
+          <div class="screen-heading">
+            <div>
+              <p class="eyebrow">CONFIGURATION</p>
+              <h1 id="settings-title">Configuration</h1>
+            </div>
+            <span class="heading-code">[CFG]</span>
+          </div>
+
+          <div class="segmented-control config-tabs" role="tablist" aria-label="Configuration sections">
+            <button class="active" data-config-tab="general" role="tab">GENERAL</button>
+            <button data-config-tab="layout" role="tab">LAYOUT</button>
+            <button data-config-tab="themes" role="tab">THEMES</button>
+          </div>
+
+          <div class="panel settings-panel config-pane active" id="config-general-pane">
+            <div class="setting-row">
+              <div><strong>OPENING ANIMATION</strong><small>Show boot sequence on launch</small></div>
+              <button class="toggle active" id="intro-toggle" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="setting-row">
+              <div><strong>SCREEN MOTION</strong><small>Animate transitions and controls</small></div>
+              <button class="toggle active" id="motion-toggle" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="setting-row">
+              <div><strong>EXPLANATORY TEXT</strong><small>Show contextual guidance and empty-state descriptions</small></div>
+              <button class="toggle active" id="explanatory-text-toggle" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="setting-row body-frame-setting" id="body-frame-setting">
+              <div><strong>BODY FRAME</strong><small>Choose the model used for body proportions</small></div>
+              <div class="body-frame-options" role="radiogroup" aria-label="Body frame">
+                <button data-body-frame="male" type="button" role="radio" aria-checked="true">MALE</button>
+                <button data-body-frame="female" type="button" role="radio" aria-checked="false">FEMALE</button>
+              </div>
+            </div>
+            <div class="setting-row danger-row">
+              <div><strong>CLEAR LOCAL DATA</strong><small>Remove habits, entries, and time logs</small></div>
+              <button class="danger-button" id="clear-data" type="button">CLEAR</button>
+            </div>
+          </div>
+
+          <div class="panel settings-panel config-pane" id="config-layout-pane">
+            <div class="setting-row">
+              <div><strong>LAYOUT EDIT MODE</strong><small>Customize which sub-tabs are visible without deleting their data</small></div>
+              <button class="toggle" id="edit-mode-toggle" role="switch" aria-checked="false"><span></span></button>
+            </div>
+            <div class="setting-row startup-setting">
+              <div><strong>STARTUP AREA</strong><small>Choose the first screen opened after launch</small></div>
+              <div class="startup-options" role="group" aria-label="Startup area">
+                <button data-start-screen="home" type="button">HOME</button>
+                <button data-start-screen="journal" type="button">JOURNAL</button>
+                <button data-start-screen="archive" type="button">ARCHIVE</button>
+                <button data-start-screen="timer" type="button">TIMER</button>
+                <button data-start-screen="body" type="button">BODY</button>
+                <button data-start-screen="focus" type="button">FOCUS</button>
+              </div>
+            </div>
+            <div class="setting-row tab-visibility-setting">
+              <div><strong>HOME AREAS</strong><small>Hide shortcuts without deleting their collected data</small></div>
+              <div class="tab-visibility-options" role="group" aria-label="Visible Home areas">
+                <button data-tab-visibility="journal" type="button"><span>JOURNAL</span><i></i></button>
+                <button data-tab-visibility="archive" type="button"><span>ARCHIVE</span><i></i></button>
+                <button data-tab-visibility="body" type="button"><span>BODY</span><i></i></button>
+                <button data-tab-visibility="focus" type="button"><span>FOCUS</span><i></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel settings-panel config-pane" id="config-themes-pane" aria-label="Themes">
+            <section class="theme-family">
+              <div class="theme-family-header">
+                <div><strong>TERMINAL</strong><small>Current interface system</small></div>
+                <span>ACTIVE</span>
+              </div>
+              <div class="setting-row theme-setting">
+                <div><strong>COLOR SIGNAL</strong><small>Choose a restrained interface undertone</small></div>
+                <div class="theme-options" role="radiogroup" aria-label="Terminal color signal">
+                  <button data-theme-value="violet" type="button" role="radio" aria-checked="true"><i></i><span>VIOLET</span></button>
+                  <button data-theme-value="deep" type="button" role="radio" aria-checked="false"><i></i><span>DEEP</span></button>
+                  <button data-theme-value="ember" type="button" role="radio" aria-checked="false"><i></i><span>EMBER</span></button>
+                  <button data-theme-value="slate" type="button" role="radio" aria-checked="false"><i></i><span>GRAPHITE</span></button>
+                </div>
+              </div>
+              <div class="setting-row color-vividness-setting">
+                <div><strong>COLOR VIVIDNESS</strong><small>Change only the accent color strength</small></div>
+                <div class="color-vividness-options" role="radiogroup" aria-label="Color vividness">
+                  <button data-color-vividness="soft" type="button" role="radio" aria-checked="false">SOFT</button>
+                  <button data-color-vividness="balanced" type="button" role="radio" aria-checked="true">BASE</button>
+                  <button data-color-vividness="vivid" type="button" role="radio" aria-checked="false">VIVID</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="terminal-note">
+            <span class="prompt">&gt;</span>
+            <p>All data stays on this device. No account. No cloud.</p>
+          </div>
+        </section>
+      </section>
+
+    </main>
+
+    <div class="archive-flight" id="archive-flight" aria-hidden="true">
+      <div class="flight-room">
+        <div class="flight-portal">
+          <span class="flight-door flight-door-left"><i></i><b></b></span>
+          <span class="flight-door flight-door-right"><i></i><b></b></span>
+          <span class="flight-depth-lines"><i></i><b></b><em></em></span>
+        </div>
+        <strong>ARCHIVE // OPEN</strong>
+      </div>
+    </div>
+
+    <dialog class="book-viewer" id="book-viewer" aria-labelledby="book-viewer-title">
+      <div class="book-viewer-shell">
+        <header>
+          <div>
+            <p class="eyebrow">ARCHIVE.READ_ONLY</p>
+            <h2 id="book-viewer-title">Recorded day</h2>
+          </div>
+          <button class="book-close" id="book-close" type="button" aria-label="Close archived day">CLOSE [X]</button>
+        </header>
+        <div class="book-viewer-meta" id="book-viewer-meta"></div>
+        <nav class="book-pages" id="book-pages" aria-label="Week pages"></nav>
+        <section id="book-checklist-section">
+          <div class="panel-header"><span>CHECKLIST.SNAPSHOT</span><span>READ ONLY</span></div>
+          <ul class="book-checklist" id="book-checklist"></ul>
+        </section>
+        <section id="book-journal-section">
+          <div class="panel-header"><span>JOURNAL.SNAPSHOT</span><span>READ ONLY</span></div>
+          <div class="book-journal" id="book-journal"></div>
+        </section>
+        <section id="book-time-section">
+          <div class="panel-header"><span>TIME.SESSIONS</span><span id="book-time-total">00:00:00</span></div>
+          <ul class="book-time-logs" id="book-time-logs"></ul>
+        </section>
+        <section id="book-body-section">
+          <div class="panel-header"><span>BODY.CHECK_IN</span><span>READ ONLY</span></div>
+          <div class="book-body" id="book-body"></div>
+        </section>
+        <section id="book-focus-section">
+          <div class="panel-header"><span>FOCUS.OUTPUT</span><span>READ ONLY</span></div>
+          <div class="book-focus" id="book-focus"></div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="habit-editor" id="habit-editor" aria-labelledby="habit-editor-title">
+      <form class="habit-editor-shell" id="habit-editor-form">
+        <header>
+          <div>
+            <p class="eyebrow">HABIT.CONFIG</p>
+            <h2 id="habit-editor-title">Configure habit</h2>
+          </div>
+          <button class="book-close" id="habit-editor-close" type="button" autofocus>CANCEL [X]</button>
+        </header>
+
+        <label class="editor-field">
+          <span>NAME</span>
+          <input id="habit-editor-name" maxlength="52" autocomplete="off" required />
+        </label>
+
+        <label class="editor-field">
+          <span>DAILY NOTE / INSTRUCTIONS</span>
+          <textarea id="habit-editor-note" maxlength="280" rows="4" placeholder="Example: Push day // bench press, incline press, shoulder press."></textarea>
+          <small>This appears beneath the habit on each scheduled day.</small>
+        </label>
+
+        <fieldset class="editor-field">
+          <legend>TYPE</legend>
+          <div class="habit-type-options">
+            <label>
+              <input type="radio" name="habit-type" value="commitment" checked />
+              <span><strong>COMMITMENT</strong><small>Something you intend to do.</small></span>
+            </label>
+            <label>
+              <input type="radio" name="habit-type" value="restraint" />
+              <span><strong>RESTRAINT</strong><small>Something you intend to avoid.</small></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="editor-field">
+          <legend>SHOW ON</legend>
+          <div class="day-options">
+            <label><input type="checkbox" name="habit-day" value="mon" checked /><span>MON</span></label>
+            <label><input type="checkbox" name="habit-day" value="tue" checked /><span>TUE</span></label>
+            <label><input type="checkbox" name="habit-day" value="wed" checked /><span>WED</span></label>
+            <label><input type="checkbox" name="habit-day" value="thu" checked /><span>THU</span></label>
+            <label><input type="checkbox" name="habit-day" value="fri" checked /><span>FRI</span></label>
+            <label><input type="checkbox" name="habit-day" value="sat" checked /><span>SAT</span></label>
+            <label><input type="checkbox" name="habit-day" value="sun" checked /><span>SUN</span></label>
+          </div>
+        </fieldset>
+
+        <label class="editor-field">
+          <span>DAILY TARGET</span>
+          <input id="habit-editor-target" type="number" inputmode="numeric" min="1" max="99" step="1" value="1" />
+          <small>Use more than one when the habit should be checked several times per day.</small>
+        </label>
+
+        <button class="primary-button editor-save" type="submit">SAVE HABIT</button>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+    <script src="./app.js?v=66"></script>
+  </body>
+</html>
