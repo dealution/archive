@@ -6,8 +6,8 @@
   "description": "Archive: habits, journal, body, focus, and time in one private command center.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#050505",
-  "theme_color": "#050505",
+  "background_color": "#020202",
+  "theme_color": "#020202",
   "orientation": "portrait-primary",
   "icons": [
     {

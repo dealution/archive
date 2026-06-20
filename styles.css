@@ -17664,3 +17664,296 @@ body.edit-mode .habit-item {
     animation-duration: .01ms !important;
   }
 }
+
+/* v68: invisible touch geometry, coherent theme highlights, continuous background, and calmer type. */
+:root {
+  --premium-font: "Bahnschrift", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), .065), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), .009) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), .009) 1px, transparent 1px),
+    #020202 !important;
+  background-size: auto, 28px 28px, 28px 28px, auto !important;
+  background-attachment: fixed !important;
+}
+
+html,
+body,
+.app-shell,
+.screen-stage {
+  background-color: #020202 !important;
+}
+
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), .065), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), .009) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), .009) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), .025), transparent 58%),
+    #020202 !important;
+  background-size: auto, 28px 28px, 28px 28px, auto, auto !important;
+  background-attachment: fixed !important;
+}
+
+.app-shell,
+.screen-stage {
+  min-height: 100svh;
+  background:
+    linear-gradient(to bottom, rgba(var(--accent-rgb), .018), transparent 34rem),
+    transparent !important;
+}
+
+body::before {
+  inset: -40vh 0 -40vh !important;
+  opacity: .055 !important;
+  background-image: radial-gradient(circle, rgba(var(--accent-rgb), .28) 0 .45px, transparent .7px) !important;
+  background-size: 7px 7px !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+
+.overscroll-glow {
+  display: none !important;
+}
+
+/* The touch target remains generous, but only the 18px control is painted. */
+.habit-check {
+  width: 36px !important;
+  height: 36px !important;
+  margin: -6px -5px -6px -7px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  outline: 0 !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.habit-check::after {
+  inset: 9px !important;
+  width: auto;
+  height: auto;
+  border-color: rgba(var(--accent-rgb), .38) !important;
+  background: rgba(var(--accent-rgb), .018) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.64) !important;
+  pointer-events: none;
+}
+
+.habit-check::before {
+  inset: 13px !important;
+  pointer-events: none;
+}
+
+.habit-check > span {
+  position: absolute !important;
+  z-index: 2;
+  inset: 9px !important;
+  display: grid !important;
+  width: auto !important;
+  height: auto !important;
+  place-items: center;
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(var(--accent-rgb), .88) !important;
+  font-size: 5px !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+.habit-check:focus-visible {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+}
+
+.habit-check:focus-visible::after {
+  border-color: rgba(var(--accent-rgb), .9) !important;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), .13), inset 0 0 0 1px rgba(0,0,0,.64) !important;
+}
+
+.habit-item.completed .habit-check::after {
+  border-color: rgba(var(--accent-rgb), .82) !important;
+  background: rgba(var(--accent-rgb), .13) !important;
+}
+
+/* Focus and selected states use the active theme instead of generic white. */
+::selection {
+  background: rgba(var(--accent-rgb), .42);
+  color: #fff;
+}
+
+:where(input, textarea, select):focus,
+:where(input, textarea, select):focus-visible,
+.reminder-form input:focus,
+.reminder-form input:focus-visible {
+  border-color: rgba(var(--accent-rgb), .7) !important;
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .11), 0 0 0 1px rgba(var(--accent-rgb), .05) !important;
+}
+
+.reminder-form input {
+  border-color: rgba(var(--accent-rgb), .14) !important;
+}
+
+.reminder-form input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: .72;
+  filter: sepia(1) saturate(1.7) hue-rotate(145deg);
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs button.active,
+  .body-tabs button.active,
+  .focus-tabs button.active,
+  .config-tabs button.active,
+  .theme-options button.active,
+  .color-vividness-options button.active,
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .day-options input:checked + span,
+  .habit-type-options input:checked + span
+) {
+  border-color: rgba(var(--accent-rgb), .58) !important;
+  background: rgba(var(--accent-rgb), .115) !important;
+  color: var(--accent-strong) !important;
+  box-shadow: inset 0 -2px rgba(var(--accent-rgb), .34) !important;
+}
+
+.primary-button:focus-visible,
+.ghost-button:focus-visible,
+.terminal-action:focus-visible,
+button:focus-visible {
+  outline-color: rgba(var(--accent-rgb), .78) !important;
+}
+
+/* Topbar identity follows the selected signal color. */
+.brand {
+  position: relative;
+  color: var(--accent-strong) !important;
+}
+
+.brand::before {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  background: var(--accent-strong);
+  content: "";
+  opacity: .9;
+  -webkit-mask: url("./app-logo.png") center / contain no-repeat;
+  mask: url("./app-logo.png") center / contain no-repeat;
+  transition: opacity .32s ease, transform .32s cubic-bezier(.2,.8,.2,1), background-color .5s ease;
+}
+
+.brand-logo {
+  display: none !important;
+}
+
+.brand .prompt {
+  color: var(--accent-strong) !important;
+}
+
+.brand:active::before {
+  opacity: 1;
+  transform: scale(.94);
+}
+
+#top-screen-name {
+  border-left-color: rgba(var(--accent-rgb), .24) !important;
+  color: rgba(var(--accent-rgb), .68) !important;
+}
+
+/* Premium type: bright content uses a calm condensed face; terminal metadata stays monospaced. */
+:where(.screen, dialog) h1,
+:where(.screen, dialog) h2,
+.habit-name,
+.today-reminder-card strong,
+.reminder-chip strong,
+.schedule-reminder strong,
+.schedule-card strong,
+.calorie-meal-card strong,
+.calorie-activity-card strong,
+.book-checklist li > span:last-child,
+.home-launchpad strong,
+.review-overview strong,
+.focus-review-card strong {
+  font-family: var(--premium-font) !important;
+  font-weight: 500 !important;
+  letter-spacing: .018em !important;
+}
+
+:where(.screen, dialog) :where(input, textarea, select, option) {
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  word-spacing: normal !important;
+}
+
+.habit-name {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+.screen-heading h1 {
+  letter-spacing: -.02em !important;
+}
+
+/* Barely slower motion for a heavier, less twitchy feel. */
+.screen.active {
+  animation-duration: .29s !important;
+}
+
+.action-pulse {
+  animation-duration: .4s !important;
+}
+
+.habit-item.habit-toggled {
+  animation-duration: .33s !important;
+}
+
+.habit-item.habit-reordered {
+  animation-duration: .4s !important;
+}
+
+.primary-button.action-confirmed,
+.ghost-button.action-confirmed {
+  animation-duration: .56s !important;
+}
+
+.completion-progress-line {
+  transition-duration: 1.02s, .42s !important;
+}
+
+.memory-shelf .mini-book-upright {
+  transition-duration: .54s, .78s, .48s, .58s !important;
+}
+
+.topbar-access,
+.home-launchpad button,
+.archive-tabs button,
+.segmented-control button,
+.primary-button,
+.ghost-button,
+.terminal-action {
+  transition-duration: .24s !important;
+}
+
+@media (max-width: 560px) {
+  .habit-check {
+    width: 35px !important;
+    height: 35px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.active,
+  .action-pulse,
+  .habit-item.habit-toggled,
+  .habit-item.habit-reordered,
+  .primary-button.action-confirmed,
+  .ghost-button.action-confirmed {
+    animation-duration: .01ms !important;
+  }
+}
