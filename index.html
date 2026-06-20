@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#050505" />
+    <meta name="theme-color" content="#020202" />
     <meta name="description" content="Archive: a focused habit, journal, and time tracker." />
-    <link rel="manifest" href="./manifest.webmanifest?v=66" />
+    <style>html,body{background:#020202;color-scheme:dark}</style>
+    <link rel="manifest" href="./manifest.webmanifest?v=67" />
     <link rel="icon" href="./icon-192.png?v=26" type="image/png" />
     <link rel="apple-touch-icon" href="./icon-192.png?v=26" />
-    <link rel="stylesheet" href="./styles.css?v=66" />
+    <link rel="stylesheet" href="./styles.css?v=67" />
     <title>Archive</title>
   </head>
   <body>
@@ -31,10 +32,10 @@
     <main class="app-shell" id="app">
       <header class="topbar">
         <div class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></div>
-        <button class="brand" data-screen="home" aria-label="Go home">
+        <button class="brand" data-screen="home" aria-label="Go to checklist">
           <img class="brand-logo" src="./app-logo.png" alt="" />
           <span class="prompt">ARCHIVE</span>
-          <span id="top-screen-name">HOME</span>
+          <span id="top-screen-name">CHECKLIST</span>
         </button>
         <div class="topbar-actions">
           <button class="topbar-access timer-access" data-screen="timer" aria-label="Open timer"><span class="topbar-icon">[T]</span><span>TIMER</span></button>
@@ -47,7 +48,7 @@
           <div class="screen-heading">
             <div>
               <p class="eyebrow" id="today-label">TODAY // --</p>
-              <h1 id="home-title">Daily protocol</h1>
+              <h1 id="home-title">Checklist</h1>
             </div>
             <div class="completion-dial" id="completion-dial" style="--progress: 0" aria-label="0 percent complete">
               <svg viewBox="0 0 52 52" aria-hidden="true">
@@ -63,6 +64,8 @@
               <div class="memory-shelf"><span class="mini-books" id="home-mini-books"></span></div>
               <span class="memory-enter">ENTER LIBRARY</span>
             </button>
+
+            <section class="today-reminder-banner" id="today-reminder-banner" hidden aria-live="polite"></section>
 
             <div class="panel protocol-panel">
               <div class="panel-header">
@@ -83,6 +86,16 @@
                 <button type="submit">EXEC</button>
               </form>
             </div>
+
+            <section class="panel reminder-composer">
+              <div class="panel-header"><span>REMINDERS</span><span>SPECIFIC DAY</span></div>
+              <form class="reminder-form" id="reminder-form">
+                <input id="reminder-text" maxlength="140" autocomplete="off" placeholder="What needs your attention?" aria-label="Reminder text" required />
+                <input id="reminder-date" type="date" aria-label="Reminder date" required />
+                <button class="primary-button" id="reminder-save" type="submit">SET REMINDER</button>
+              </form>
+              <div class="reminder-upcoming" id="reminder-upcoming"></div>
+            </section>
 
             <nav class="home-launchpad" aria-label="App areas">
               <button data-screen="journal" data-home-tab="journal"><span>01</span><strong>JOURNAL</strong><small id="home-journal-state">WRITE TODAY</small></button>
@@ -109,7 +122,7 @@
               <textarea id="journal-body" rows="8"></textarea>
             </label>
             <label>
-              <span>MESSAGE FOR TOMORROW</span>
+              <span class="field-label-row"><span>MESSAGE FOR TOMORROW</span><button class="terminal-action future-note-clear" id="future-note-clear" type="button">CLEAR</button></span>
               <textarea id="future-note" rows="3" maxlength="360"></textarea>
             </label>
             <button class="primary-button" id="journal-save" type="submit">SAVE ENTRY</button>
@@ -326,19 +339,6 @@
               <button class="primary-button" id="calorie-goals-save" type="submit">SAVE TARGETS</button>
             </form>
             <div class="calorie-entry-grid">
-              <section class="calorie-entry-column calorie-activity-column">
-                <form class="panel body-form calorie-activity-form" id="calorie-activity-form">
-                  <div class="panel-header"><span>ADD.ACTIVITY</span><span>BURN</span></div>
-                  <div class="calorie-form-grid">
-                    <label><span>ACTIVITY</span><input id="calorie-activity-name" maxlength="52" autocomplete="off" placeholder="Long walk" required /></label>
-                    <label><span>CALORIES BURNED</span><input id="calorie-activity-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="320" required /></label>
-                  </div>
-                  <label><span>NOTE</span><input id="calorie-activity-note" maxlength="180" placeholder="Duration, distance..." /></label>
-                  <button class="primary-button" id="calorie-activity-save" type="submit">ADD ACTIVITY</button>
-                </form>
-                <div class="calorie-column-label"><span>ACTIVITIES</span><small>EXTRA BURN</small></div>
-                <div class="calorie-activity-list" id="calorie-activity-list"></div>
-              </section>
               <section class="calorie-entry-column calorie-meal-column">
                 <form class="panel body-form calorie-meal-form" id="calorie-meal-form">
                   <div class="panel-header"><span>ADD.MEAL</span><span>INTAKE</span></div>
@@ -352,6 +352,19 @@
                 </form>
                 <div class="calorie-column-label"><span>MEALS</span><small>DAILY INTAKE</small></div>
                 <div class="calorie-meal-list" id="calorie-meal-list"></div>
+              </section>
+              <section class="calorie-entry-column calorie-activity-column">
+                <form class="panel body-form calorie-activity-form" id="calorie-activity-form">
+                  <div class="panel-header"><span>ADD.ACTIVITY</span><span>BURN</span></div>
+                  <div class="calorie-form-grid">
+                    <label><span>ACTIVITY</span><input id="calorie-activity-name" maxlength="52" autocomplete="off" placeholder="Long walk" required /></label>
+                    <label><span>CALORIES BURNED</span><input id="calorie-activity-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="320" required /></label>
+                  </div>
+                  <label><span>NOTE</span><input id="calorie-activity-note" maxlength="180" placeholder="Duration, distance..." /></label>
+                  <button class="primary-button" id="calorie-activity-save" type="submit">ADD ACTIVITY</button>
+                </form>
+                <div class="calorie-column-label"><span>ACTIVITIES</span><small>EXTRA BURN</small></div>
+                <div class="calorie-activity-list" id="calorie-activity-list"></div>
               </section>
             </div>
             <div class="calorie-history" id="calorie-history"></div>
@@ -480,6 +493,14 @@
               <div><strong>CLEAR LOCAL DATA</strong><small>Remove habits, entries, and time logs</small></div>
               <button class="danger-button" id="clear-data" type="button">CLEAR</button>
             </div>
+            <div class="setting-row backup-row">
+              <div><strong>PRIVATE BACKUP</strong><small>Export before deleting the PWA; import it after reinstalling</small></div>
+              <div class="backup-actions">
+                <button class="ghost-button compact" id="export-backup" type="button">EXPORT</button>
+                <button class="ghost-button compact" id="import-backup" type="button">IMPORT</button>
+                <input id="backup-file" type="file" accept="application/json,.json" hidden />
+              </div>
+            </div>
           </div>
 
           <div class="panel settings-panel config-pane" id="config-layout-pane">
@@ -490,7 +511,7 @@
             <div class="setting-row startup-setting">
               <div><strong>STARTUP AREA</strong><small>Choose the first screen opened after launch</small></div>
               <div class="startup-options" role="group" aria-label="Startup area">
-                <button data-start-screen="home" type="button">HOME</button>
+                <button data-start-screen="home" type="button">CHECKLIST</button>
                 <button data-start-screen="journal" type="button">JOURNAL</button>
                 <button data-start-screen="archive" type="button">ARCHIVE</button>
                 <button data-start-screen="timer" type="button">TIMER</button>
@@ -518,14 +539,14 @@
               <div class="setting-row theme-setting">
                 <div><strong>COLOR SIGNAL</strong><small>Choose a restrained interface undertone</small></div>
                 <div class="theme-options" role="radiogroup" aria-label="Terminal color signal">
-                  <button data-theme-value="violet" type="button" role="radio" aria-checked="true"><i></i><span>VIOLET</span></button>
+                  <button data-theme-value="violet" type="button" role="radio" aria-checked="true"><i></i><span>AURORA</span></button>
                   <button data-theme-value="deep" type="button" role="radio" aria-checked="false"><i></i><span>DEEP</span></button>
                   <button data-theme-value="ember" type="button" role="radio" aria-checked="false"><i></i><span>EMBER</span></button>
-                  <button data-theme-value="slate" type="button" role="radio" aria-checked="false"><i></i><span>GRAPHITE</span></button>
+                  <button data-theme-value="slate" type="button" role="radio" aria-checked="false"><i></i><span>BRASS</span></button>
                 </div>
               </div>
               <div class="setting-row color-vividness-setting">
-                <div><strong>COLOR VIVIDNESS</strong><small>Change only the accent color strength</small></div>
+                <div><strong>COLOR VIVIDNESS</strong><small>Control how far the selected signal reaches into the interface</small></div>
                 <div class="color-vividness-options" role="radiogroup" aria-label="Color vividness">
                   <button data-color-vividness="soft" type="button" role="radio" aria-checked="false">SOFT</button>
                   <button data-color-vividness="balanced" type="button" role="radio" aria-checked="true">BASE</button>
@@ -599,7 +620,7 @@
           <button class="book-close" id="habit-editor-close" type="button" autofocus>CANCEL [X]</button>
         </header>
 
-        <label class="editor-field">
+        <label class="editor-field target-editor-field">
           <span>NAME</span>
           <input id="habit-editor-name" maxlength="52" autocomplete="off" required />
         </label>
@@ -647,7 +668,9 @@
       </form>
     </dialog>
 
+    <div class="config-loading" id="config-loading" role="status" aria-live="polite">LOADING<span></span></div>
+    <div class="overscroll-glow" aria-hidden="true"></div>
     <div class="toast" id="toast" role="status"></div>
-    <script src="./app.js?v=66"></script>
+    <script src="./app.js?v=67"></script>
   </body>
 </html>

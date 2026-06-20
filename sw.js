@@ -1,5 +1,5 @@
-const CACHE_NAME = "archive-v66";
-const APP_SHELL = ["./", "./index.html", "./styles.css?v=66", "./app.js?v=66", "./manifest.webmanifest?v=66", "./app-logo.png", "./icon-192.png?v=26", "./icon-512.png?v=26"];
+const CACHE_NAME = "archive-v67";
+const APP_SHELL = ["./", "./index.html", "./styles.css?v=67", "./app.js?v=67", "./manifest.webmanifest?v=67", "./app-logo.png", "./icon-192.png?v=26", "./icon-512.png?v=26"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));

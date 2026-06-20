@@ -17006,3 +17006,661 @@ body,
     animation-delay: 0ms !important;
   }
 }
+
+/* v67: interaction, reminders, private backups, review clarity, and theme depth. */
+:root {
+  --theme-surface-rgb: 7, 18, 23;
+  --theme-wash: .055;
+  --theme-glow: .12;
+  --theme-grid: .015;
+  --theme-saturation: 1;
+  --overscroll-light: 0;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% -22%, rgba(var(--accent-rgb), calc(var(--theme-glow) + var(--overscroll-light) * .2)), transparent 64%),
+    rgb(2 2 2);
+}
+
+html,
+body {
+  min-height: 100%;
+  background-color: #020202 !important;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 118% 54% at 50% -14%, rgba(var(--accent-rgb), var(--theme-glow)), transparent 66%),
+    linear-gradient(rgba(var(--accent-rgb), var(--theme-grid)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), var(--theme-grid)) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), var(--theme-wash)), transparent 52%),
+    #020202 !important;
+  background-size: auto, 26px 26px, 26px 26px, auto, auto !important;
+  background-attachment: fixed !important;
+}
+
+.overscroll-glow {
+  position: fixed;
+  z-index: 0;
+  top: -42vh;
+  right: -20vw;
+  left: -20vw;
+  height: 72vh;
+  pointer-events: none;
+  opacity: calc(.28 + var(--overscroll-light) * .72);
+  background: radial-gradient(ellipse at 50% 100%, rgba(var(--accent-rgb), calc(var(--theme-glow) + var(--overscroll-light) * .2)), transparent 68%);
+  filter: saturate(var(--theme-saturation));
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.splash {
+  z-index: 250;
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+@media (hover: none) {
+  button:hover,
+  [role="button"]:hover {
+    filter: none !important;
+    transform: none !important;
+  }
+
+  .primary-button:hover {
+    border-color: #d6d6cf !important;
+    background: #d6d6cf !important;
+    color: #090909 !important;
+  }
+}
+
+.primary-button.action-confirmed,
+.ghost-button.action-confirmed {
+  border-color: rgba(var(--accent-rgb), .82) !important;
+  background: rgba(var(--accent-rgb), .22) !important;
+  color: var(--accent-strong) !important;
+  animation: v67-confirm .48s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes v67-confirm {
+  0% { transform: scale(.985); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0); }
+  50% { transform: scale(1.012); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .28), 0 0 18px rgba(var(--accent-rgb), .08); }
+  100% { transform: scale(1); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .08); }
+}
+
+/* Stable checklist interaction: large invisible target, compact visible square. */
+.habit-item {
+  min-height: 51px !important;
+  overflow: visible !important;
+}
+
+.habit-check {
+  width: 40px !important;
+  height: 40px !important;
+  margin: -8px -7px -8px -8px !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.habit-check::after {
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(225, 225, 218, .42);
+  background: rgba(0, 0, 0, .18);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.62);
+  content: "";
+}
+
+.habit-check::before {
+  z-index: 1;
+  inset: 14px !important;
+}
+
+.habit-item.completed .habit-check {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.habit-item.completed .habit-check::after {
+  border-color: rgba(var(--accent-rgb), .76);
+  background: rgba(var(--accent-rgb), .11);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), .1);
+}
+
+.habit-item.habit-toggled,
+.habit-item.action-pulse {
+  animation: v67-check-settle .28s cubic-bezier(.2,.82,.2,1) both !important;
+}
+
+@keyframes v67-check-settle {
+  0%, 100% { transform: translateX(0); background-color: transparent; }
+  48% { transform: translateX(2px); background-color: rgba(var(--accent-rgb), .045); }
+}
+
+.habit-config,
+.habit-remove,
+.habit-move {
+  width: 28px;
+  min-width: 28px;
+  min-height: 30px;
+  padding: 0 !important;
+  border: 1px solid rgba(255,255,255,.1);
+  background: #080808;
+  color: #858188;
+  font-family: var(--code-font);
+  font-size: 5px;
+}
+
+.habit-move {
+  display: none;
+  color: rgba(var(--accent-rgb), .82);
+  font-size: 11px;
+}
+
+body.edit-mode .habit-move {
+  display: block;
+}
+
+body.edit-mode .habit-item {
+  grid-template-columns: 28px minmax(0, 1fr) repeat(4, 28px) !important;
+  gap: 4px !important;
+}
+
+.habit-item.habit-reordered {
+  animation: v67-reorder .34s cubic-bezier(.18,.82,.2,1) both !important;
+}
+
+.habit-list.habit-drag-active {
+  padding-block: 4px;
+}
+
+.habit-item.habit-dragging {
+  z-index: 20;
+  border-color: rgba(var(--accent-rgb), .64) !important;
+  background: rgba(var(--accent-rgb), .09) !important;
+  box-shadow: 0 14px 30px rgba(0,0,0,.42), 0 0 0 1px rgba(var(--accent-rgb), .14) !important;
+  transform: scale(1.018) !important;
+  transition: transform .18s cubic-bezier(.2,.82,.2,1), box-shadow .18s ease;
+}
+
+@keyframes v67-reorder {
+  from { opacity: .72; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Use the terminal face for user-authored and fully bright interface text. */
+:where(.screen, dialog) :where(h1, h2, strong, input, textarea, select, option),
+.habit-name,
+.schedule-card strong,
+.calorie-meal-card strong,
+.calorie-activity-card strong,
+.book-checklist li > span:last-child {
+  font-family: var(--code-font) !important;
+}
+
+:where(input, textarea, select, option),
+.habit-name,
+.habit-note {
+  word-spacing: normal !important;
+  letter-spacing: .01em !important;
+}
+
+.command-form input {
+  font-family: var(--code-font) !important;
+  word-spacing: normal !important;
+  letter-spacing: .005em !important;
+}
+
+.target-editor-field {
+  width: min(100%, 190px);
+  justify-self: center;
+  margin-inline: auto;
+  padding: 10px !important;
+  border: 1px solid rgba(var(--accent-rgb), .15);
+  background: rgba(var(--accent-rgb), .025);
+  text-align: center;
+}
+
+.target-editor-field > span,
+.target-editor-field > small {
+  text-align: center !important;
+}
+
+.target-editor-field input {
+  width: 82px !important;
+  margin-inline: auto;
+  text-align: center;
+}
+
+/* Reminder workflow. */
+.today-reminder-banner {
+  display: grid;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.today-reminder-card {
+  position: relative;
+  display: grid;
+  gap: 7px;
+  min-height: 70px;
+  padding: 12px 42px 12px 13px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--accent-rgb), .35);
+  background:
+    linear-gradient(110deg, rgba(var(--accent-rgb), .11), transparent 58%),
+    #060606;
+  box-shadow: inset 3px 0 rgba(var(--accent-rgb), .5);
+}
+
+.today-reminder-card::after {
+  position: absolute;
+  top: -22px;
+  right: -18px;
+  width: 80px;
+  height: 80px;
+  border: 1px solid rgba(var(--accent-rgb), .12);
+  content: "";
+  transform: rotate(45deg);
+}
+
+.today-reminder-card > span,
+.today-reminder-card > strong {
+  position: relative;
+  z-index: 1;
+}
+
+.today-reminder-card > span {
+  color: rgba(var(--accent-rgb), .8);
+  font-family: var(--code-font);
+  font-size: 6px;
+  letter-spacing: .09em;
+}
+
+.today-reminder-card > strong {
+  color: #ecebe7;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.today-reminder-card .terminal-action {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 9px;
+}
+
+.reminder-composer {
+  margin-top: 8px;
+}
+
+.reminder-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(116px, .52fr);
+  gap: 6px;
+  padding: 9px;
+}
+
+.reminder-form input {
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: #070707;
+  color: #e7e5e8;
+  font-size: 10px !important;
+}
+
+.reminder-form .primary-button {
+  grid-column: 1 / -1;
+  min-height: 38px;
+}
+
+.reminder-upcoming {
+  display: grid;
+  gap: 4px;
+  padding: 0 9px 9px;
+}
+
+.reminder-chip,
+.schedule-reminder {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 7px 8px;
+  border: 1px solid rgba(255,255,255,.075);
+  background: rgba(255,255,255,.012);
+}
+
+.reminder-chip.today {
+  border-color: rgba(var(--accent-rgb), .28);
+}
+
+.reminder-chip > span,
+.schedule-reminder > span {
+  color: rgba(var(--accent-rgb), .72);
+  font-family: var(--code-font);
+  font-size: 6px;
+}
+
+.reminder-chip > strong,
+.schedule-reminder > strong {
+  color: #dedcdf;
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.reminder-empty,
+.schedule-reminder-empty {
+  padding: 10px;
+  color: #666168;
+  font-family: var(--code-font);
+  font-size: 6px;
+  letter-spacing: .07em;
+}
+
+.archive-reminder-schedule {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  border: 1px solid rgba(var(--accent-rgb), .12);
+  background: #050505;
+}
+
+.archive-reminder-schedule .panel-header {
+  margin: 0;
+}
+
+.archive-reminder-schedule .schedule-reminder {
+  margin-inline: 8px;
+}
+
+.archive-reminder-schedule .schedule-reminder:last-child {
+  margin-bottom: 8px;
+}
+
+.field-label-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.future-note-clear {
+  display: none;
+}
+
+.future-note-clear.visible {
+  display: inline-flex;
+}
+
+/* Nutrition alignment and compact editing controls. */
+.calorie-entry-grid {
+  align-items: stretch !important;
+}
+
+.calorie-meal-column {
+  grid-column: 1;
+}
+
+.calorie-activity-column {
+  grid-column: 2;
+}
+
+.calorie-entry-column .body-form {
+  height: 310px;
+  min-height: 310px;
+  align-content: start;
+}
+
+.calorie-entry-column .body-form > .primary-button {
+  margin-top: auto !important;
+}
+
+.calorie-entry-column .calorie-meal-card header,
+.calorie-entry-column .calorie-activity-card header {
+  min-height: 27px;
+  align-items: center !important;
+}
+
+.calorie-entry-column .calorie-meal-card > div,
+.calorie-entry-column .calorie-activity-card > div {
+  min-height: 45px;
+  justify-content: center;
+}
+
+.calorie-entry-column .calorie-meal-card strong,
+.calorie-entry-column .calorie-activity-card strong {
+  margin: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.calorie-card-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.calorie-card-actions .terminal-action {
+  min-width: 28px;
+  min-height: 23px !important;
+  padding-inline: 4px !important;
+}
+
+/* Archive books and reviews. */
+.archive-book,
+.weekly-book {
+  text-align: center !important;
+}
+
+.archive-book > span,
+.weekly-book > span {
+  right: 5px !important;
+  left: 5px !important;
+  width: auto !important;
+  margin-inline: auto !important;
+  text-align: center !important;
+}
+
+.archive-book .book-date {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25 !important;
+}
+
+.archive-book .book-mark,
+.archive-book .book-score {
+  display: block;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.weekly-reviews .panel-header {
+  min-height: 34px;
+  padding-inline: 10px !important;
+  font-size: 7px !important;
+  line-height: 1.35 !important;
+}
+
+.weekly-reviews .panel-header > span {
+  min-width: 0;
+  flex: 1;
+}
+
+.weekly-reviews .panel-header > span:last-child {
+  text-align: right;
+}
+
+.weekly-reviews :where(.line-labels strong, .review-pr-grid p, .review-skills header strong, .review-skills header span, .nutrition-review-strip > span) {
+  font-family: var(--code-font) !important;
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+}
+
+.weekly-reviews .review-overview {
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)) !important;
+}
+
+.weekly-reviews .review-period {
+  align-items: center;
+}
+
+.weekly-reviews .review-period-state {
+  text-align: right;
+}
+
+.review-empty {
+  margin-top: 8px;
+}
+
+/* Home shelf fills upward with a brighter base and a stable transition. */
+.memory-shelf .mini-book-upright {
+  opacity: .48;
+  background:
+    linear-gradient(to top, rgba(var(--accent-rgb), .66) 0, rgba(var(--accent-rgb), .34) var(--mini-fill, 0%), rgba(255,255,255,.025) var(--mini-fill, 0%)),
+    linear-gradient(90deg, rgba(255,255,255,.13), transparent 34% 72%, rgba(0,0,0,.54)),
+    #0b0a0c !important;
+  box-shadow:
+    inset 0 -8px 12px rgba(var(--accent-rgb), .1),
+    inset 1px 0 rgba(255,255,255,.04),
+    0 0 0 1px rgba(0,0,0,.38) !important;
+  transition:
+    opacity .46s ease,
+    background .68s cubic-bezier(.18,.82,.2,1),
+    border-color .4s ease,
+    box-shadow .5s ease !important;
+}
+
+.memory-shelf .mini-book-upright.has-entry {
+  opacity: .78;
+}
+
+.memory-shelf .mini-book-upright.completed {
+  opacity: 1;
+  border-color: rgba(var(--accent-rgb), .78) !important;
+  box-shadow:
+    inset 0 -12px 16px rgba(var(--accent-rgb), .2),
+    inset 1px 0 rgba(255,255,255,.08),
+    0 0 9px rgba(var(--accent-rgb), .13) !important;
+}
+
+/* Tiny immediate configuration feedback. */
+.config-loading {
+  position: fixed;
+  z-index: 220;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  left: calc(8px + env(safe-area-inset-left));
+  padding: 4px 6px;
+  border: 1px solid rgba(var(--accent-rgb), .14);
+  background: rgba(3,3,3,.88);
+  color: #77727a;
+  font-family: var(--code-font);
+  font-size: 6px;
+  line-height: 1;
+  letter-spacing: .06em;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity .16s ease, transform .16s ease, color .16s ease;
+}
+
+.config-loading.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.config-loading.saved {
+  color: rgba(var(--accent-rgb), .86);
+}
+
+.config-loading span::after {
+  content: "...";
+  animation: v67-loading-dots .8s steps(4, end) infinite;
+}
+
+.config-loading.saved span::after {
+  content: "";
+  animation: none;
+}
+
+@keyframes v67-loading-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+
+.backup-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.theme-options button[data-theme-value="violet"] i {
+  background: rgb(74 154 190) !important;
+}
+
+.theme-options button[data-theme-value="deep"] i {
+  background: rgb(112 76 160) !important;
+}
+
+.theme-options button[data-theme-value="ember"] i {
+  background: rgb(170 79 63) !important;
+}
+
+.theme-options button[data-theme-value="slate"] i {
+  background: rgb(157 132 72) !important;
+}
+
+@media (max-width: 560px) {
+  body.edit-mode .habit-item {
+    grid-template-columns: 28px minmax(0, 1fr) repeat(4, 25px) !important;
+    gap: 3px !important;
+  }
+
+  .habit-config,
+  .habit-remove,
+  .habit-move {
+    width: 25px;
+    min-width: 25px;
+  }
+
+  .reminder-form {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .reminder-chip,
+  .schedule-reminder {
+    grid-template-columns: 70px minmax(0, 1fr) auto;
+  }
+
+  .calorie-entry-column .body-form {
+    height: 300px;
+    min-height: 300px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-button.action-confirmed,
+  .ghost-button.action-confirmed,
+  .habit-item.habit-toggled,
+  .habit-item.habit-reordered,
+  .config-loading span::after {
+    animation-duration: .01ms !important;
+  }
+}

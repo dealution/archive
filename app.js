@@ -72,6 +72,7 @@ const initialState = {
   completionCounts: {},
   restraintFailures: {},
   journal: {},
+  reminders: [],
   timeLogs: {},
   dayRecords: {},
   libraryPlacements: {},
@@ -181,6 +182,8 @@ let editingBodyMetricId = null;
 let editingProjectId = null;
 let editingFocusLogId = null;
 let editingSkillId = null;
+let editingCalorieMealId = null;
+let editingCalorieActivityId = null;
 let currentArchiveTab = "days";
 let archiveSearchQuery = "";
 let currentArchiveWeek = "";
@@ -203,6 +206,10 @@ let screenTransitionTimer;
 let archiveTransitionTimer;
 let libraryOpenTimer;
 let themeColorFrame;
+let configLoadingTimer;
+let overscrollFrame;
+let suppressHabitMoveClickUntil = 0;
+let habitDragState = null;
 let layoutTabPressOrder = [];
 let layoutAreaPressOrder = { body: [], focus: [], archive: [] };
 let layoutHomeGroupPressOrder = [];
@@ -228,6 +235,14 @@ function loadState() {
       settings: { ...initialState.settings, ...(saved?.settings || {}) }
     };
     loaded.dayRecords = loaded.dayRecords || {};
+    loaded.reminders = Array.isArray(loaded.reminders)
+      ? loaded.reminders.filter((reminder) => reminder?.date && reminder?.text).map((reminder, index) => ({
+        id: String(reminder.id || `legacy-reminder-${index}`),
+        text: String(reminder.text).slice(0, 140),
+        date: String(reminder.date),
+        createdAt: Number(reminder.createdAt) || Date.now()
+      }))
+      : [];
     loaded.completionCounts = loaded.completionCounts || {};
     loaded.libraryPlacements = saved?.libraryPlacementVersion === 5 ? (loaded.libraryPlacements || {}) : {};
     loaded.libraryPlacementVersion = 5;
@@ -439,6 +454,7 @@ function saveTimerRuntime() {
 
 function saveState() {
   state.persistedAt = Date.now();
+  if (currentScreen === "settings") showConfigLoading();
   if (!durableStorageReady) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -566,6 +582,14 @@ function mergeCurrentStateShape(saved) {
     completionCounts: saved.completionCounts || {},
     restraintFailures: saved.restraintFailures || {},
     journal: saved.journal || {},
+    reminders: Array.isArray(saved.reminders)
+      ? saved.reminders.filter((reminder) => reminder?.date && reminder?.text).map((reminder, index) => ({
+        id: String(reminder.id || `legacy-reminder-${index}`),
+        text: String(reminder.text).slice(0, 140),
+        date: String(reminder.date),
+        createdAt: Number(reminder.createdAt) || Date.now()
+      }))
+      : [],
     timeLogs: saved.timeLogs || {},
     dayRecords: saved.dayRecords || {},
     libraryPlacements: saved.libraryPlacements || {},
@@ -680,6 +704,7 @@ function syncDayRecord(key = dateKey()) {
   state.dayRecords = state.dayRecords || {};
   if (!hasActivity) {
     delete state.dayRecords[key];
+    if (currentScreen === "library") requestAnimationFrame(renderLibrary);
     return;
   }
 
@@ -701,6 +726,7 @@ function syncDayRecord(key = dateKey()) {
     focus: focus.map((log) => ({ ...log })),
     updatedAt: new Date().toISOString()
   };
+  if (currentScreen === "library") requestAnimationFrame(renderLibrary);
 }
 
 function habitShowsOnDate(habit, date = new Date()) {
@@ -895,8 +921,58 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
+function showConfigLoading() {
+  const indicator = document.querySelector("#config-loading");
+  if (!indicator) return;
+  indicator.classList.remove("saved");
+  indicator.classList.add("show");
+  indicator.firstChild.textContent = "LOADING";
+  clearTimeout(configLoadingTimer);
+  configLoadingTimer = setTimeout(() => {
+    indicator.classList.add("saved");
+    indicator.firstChild.textContent = "SAVED";
+    configLoadingTimer = setTimeout(() => indicator.classList.remove("show", "saved"), 620);
+  }, 260);
+}
+
+function confirmControl(button, confirmation = "SAVED", duration = 760) {
+  if (!button) return;
+  const original = button.dataset.restoreLabel || button.textContent;
+  button.dataset.restoreLabel = original;
+  button.blur();
+  button.classList.remove("action-confirmed");
+  void button.offsetWidth;
+  button.classList.add("action-confirmed");
+  button.textContent = confirmation;
+  setTimeout(() => {
+    button.classList.remove("action-confirmed");
+    button.textContent = button.dataset.restoreLabel || original;
+    delete button.dataset.restoreLabel;
+    button.blur();
+  }, duration);
+}
+
+function updateOverscrollGlow() {
+  if (overscrollFrame) return;
+  overscrollFrame = requestAnimationFrame(() => {
+    overscrollFrame = null;
+    const pull = Math.max(0, Math.min(120, -window.scrollY));
+    document.documentElement.style.setProperty("--overscroll-light", (pull / 120).toFixed(3));
+  });
+}
+
 function showScreen(name) {
-  if (name === currentScreen) return;
+  if (name === currentScreen) {
+    if (name === "archive") renderArchive();
+    if (name === "library") renderLibrary();
+    if (name === "home") {
+      renderHabits();
+      renderHomeReminders();
+      renderHomeArchive();
+    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+    return;
+  }
   const oldScreen = document.querySelector(`[data-screen-name="${currentScreen}"]`);
   const nextScreen = document.querySelector(`[data-screen-name="${name}"]`);
   if (!nextScreen) return;
@@ -918,7 +994,11 @@ function showScreen(name) {
   nextScreen.classList.add("active");
 
   currentScreen = name;
-  document.querySelector("#top-screen-name").textContent = name === "settings" ? "CONFIGURATION" : name.toUpperCase();
+  document.querySelector("#top-screen-name").textContent = name === "settings"
+    ? "CONFIGURATION"
+    : name === "home"
+      ? "CHECKLIST"
+      : name.toUpperCase();
 
   if (name === "archive") renderArchive();
   if (name === "journal") renderJournal();
@@ -995,6 +1075,8 @@ function renderHabits() {
           </span>
           <button class="habit-config" data-habit-config="${habit.id}" aria-label="Configure ${escapeHtml(habit.name)}">CFG</button>
           <button class="habit-remove" data-habit-remove="${habit.id}" aria-label="Remove ${escapeHtml(habit.name)}">DEL</button>
+          <button class="habit-move habit-move-up" data-habit-move="${habit.id}" data-habit-direction="-1" aria-label="Move ${escapeHtml(habit.name)} up">↑</button>
+          <button class="habit-move habit-move-down" data-habit-move="${habit.id}" data-habit-direction="1" aria-label="Move ${escapeHtml(habit.name)} down">↓</button>
         </li>
       `).join("") : '<li class="habit-group-empty">NO ITEMS SCHEDULED</li>'}
     `;
@@ -1129,7 +1211,106 @@ function toggleHabit(id) {
   const row = document.querySelector(`[data-habit-row="${id}"]`);
   row?.classList.add("habit-toggled");
   setTimeout(() => row?.classList.remove("habit-toggled"), 260);
-  animateHabitRow(id, 340);
+  pulseControl(row);
+}
+
+function moveHabit(id, direction) {
+  const index = state.habits.findIndex((habit) => habit.id === id);
+  if (index < 0) return;
+  const type = state.habits[index].type;
+  let swapIndex = index + Math.sign(direction);
+  while (swapIndex >= 0 && swapIndex < state.habits.length && state.habits[swapIndex].type !== type) {
+    swapIndex += Math.sign(direction);
+  }
+  if (swapIndex < 0 || swapIndex >= state.habits.length) {
+    showToast(direction < 0 ? "already at top" : "already at bottom");
+    return;
+  }
+  [state.habits[index], state.habits[swapIndex]] = [state.habits[swapIndex], state.habits[index]];
+  saveState();
+  renderHabits();
+  renderHomeArchive();
+  if (currentArchiveTab === "routines") renderHabitSchedule();
+  const row = document.querySelector(`[data-habit-row="${id}"]`);
+  row?.classList.add("habit-reordered");
+  setTimeout(() => row?.classList.remove("habit-reordered"), 360);
+  pulseControl(row);
+}
+
+function commitHabitOrderFromDom() {
+  const orderedIds = [...document.querySelectorAll("#habit-list [data-habit-row]")].map((row) => row.dataset.habitRow);
+  if (!orderedIds.length) return;
+  const orderedByType = new Map(HOME_GROUP_KEYS.map((type) => [
+    type,
+    orderedIds.filter((id) => habitById(id)?.type === type)
+  ]));
+  const indexes = new Map(HOME_GROUP_KEYS.map((type) => [type, 0]));
+  const habitByKey = new Map(state.habits.map((habit) => [habit.id, habit]));
+  state.habits = state.habits.map((habit) => {
+    const ids = orderedByType.get(habit.type) || [];
+    if (!ids.includes(habit.id)) return habit;
+    const nextId = ids[indexes.get(habit.type) || 0];
+    indexes.set(habit.type, (indexes.get(habit.type) || 0) + 1);
+    return habitByKey.get(nextId) || habit;
+  });
+  saveState();
+  renderHabits();
+  renderHomeArchive();
+  if (currentArchiveTab === "routines") renderHabitSchedule();
+}
+
+function beginHabitDrag(button, event) {
+  if (!state.settings.editMode) return;
+  const row = button.closest("[data-habit-row]");
+  if (!row) return;
+  const stateDraft = {
+    id: row.dataset.habitRow,
+    pointerId: event.pointerId,
+    startY: event.clientY,
+    active: false,
+    timer: 0
+  };
+  stateDraft.timer = setTimeout(() => {
+    stateDraft.active = true;
+    row.classList.add("habit-dragging");
+    document.querySelector("#habit-list")?.classList.add("habit-drag-active");
+    navigator.vibrate?.(18);
+  }, 380);
+  habitDragState = stateDraft;
+  try {
+    button.setPointerCapture?.(event.pointerId);
+  } catch {
+    // Synthetic or interrupted pointers can disappear before capture; quick arrows still work.
+  }
+}
+
+function updateHabitDrag(event) {
+  if (!habitDragState || event.pointerId !== habitDragState.pointerId) return;
+  if (!habitDragState.active && Math.abs(event.clientY - habitDragState.startY) > 8) {
+    clearTimeout(habitDragState.timer);
+  }
+  if (!habitDragState.active) return;
+  event.preventDefault();
+  const row = document.querySelector(`[data-habit-row="${habitDragState.id}"]`);
+  const target = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-habit-row]");
+  if (!row || !target || target === row || habitById(target.dataset.habitRow)?.type !== habitById(habitDragState.id)?.type) return;
+  const targetRect = target.getBoundingClientRect();
+  target.parentElement.insertBefore(row, event.clientY > targetRect.top + targetRect.height / 2 ? target.nextSibling : target);
+}
+
+function finishHabitDrag(event) {
+  if (!habitDragState || (event.pointerId != null && event.pointerId !== habitDragState.pointerId)) return;
+  clearTimeout(habitDragState.timer);
+  const wasActive = habitDragState.active;
+  const row = document.querySelector(`[data-habit-row="${habitDragState.id}"]`);
+  row?.classList.remove("habit-dragging");
+  document.querySelector("#habit-list")?.classList.remove("habit-drag-active");
+  habitDragState = null;
+  if (wasActive) {
+    suppressHabitMoveClickUntil = performance.now() + 500;
+    commitHabitOrderFromDom();
+    showToast("checklist order saved");
+  }
 }
 
 function openHabitEditor(name = "", id = null) {
@@ -1198,6 +1379,108 @@ function removeHabit(id) {
   showToast("habit removed");
 }
 
+function shiftedDateKey(days) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return dateKey(date);
+}
+
+function remindersForDate(key) {
+  return (state.reminders || [])
+    .filter((reminder) => reminder.date === key)
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function renderHomeReminders() {
+  const banner = document.querySelector("#today-reminder-banner");
+  const upcoming = document.querySelector("#reminder-upcoming");
+  const dateInput = document.querySelector("#reminder-date");
+  if (!banner || !upcoming || !dateInput) return;
+  if (!dateInput.value) dateInput.value = shiftedDateKey(1);
+  dateInput.min = dateKey();
+
+  const today = dateKey();
+  const yesterday = shiftedDateKey(-1);
+  const todayReminders = remindersForDate(today);
+  const carriedMessage = String(state.journal?.[yesterday]?.futureNote || "").trim();
+  const bannerItems = [
+    ...(carriedMessage ? [{ id: "journal-carryover", text: carriedMessage, source: "MESSAGE FROM YESTERDAY" }] : []),
+    ...todayReminders.map((reminder) => ({ ...reminder, source: "TODAY'S REMINDER" }))
+  ];
+  banner.hidden = !bannerItems.length;
+  banner.innerHTML = bannerItems.map((item, index) => `
+    <article class="today-reminder-card">
+      <span>${String(index + 1).padStart(2, "0")} // ${item.source}</span>
+      <strong>${escapeHtml(item.text)}</strong>
+      ${state.settings.editMode ? `<button class="terminal-action" type="button" ${item.id === "journal-carryover" ? "data-dismiss-carryover" : `data-reminder-remove="${item.id}"`}>DEL</button>` : ""}
+    </article>
+  `).join("");
+
+  const scheduled = [...(state.reminders || [])]
+    .filter((reminder) => reminder.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
+    .slice(0, 8);
+  upcoming.innerHTML = scheduled.length ? scheduled.map((reminder) => `
+    <article class="reminder-chip ${reminder.date === today ? "today" : ""}">
+      <span>${reminder.date === today ? "TODAY" : reminder.date}</span>
+      <strong>${escapeHtml(reminder.text)}</strong>
+      ${state.settings.editMode ? `<button class="terminal-action" type="button" data-reminder-remove="${reminder.id}">DEL</button>` : ""}
+    </article>
+  `).join("") : '<span class="reminder-empty">NO UPCOMING REMINDERS</span>';
+}
+
+function saveReminder() {
+  const textInput = document.querySelector("#reminder-text");
+  const dateInput = document.querySelector("#reminder-date");
+  const text = textInput.value.trim();
+  const date = dateInput.value;
+  if (!text || !date) {
+    showToast(text ? "choose a reminder date" : "write the reminder");
+    return;
+  }
+  state.reminders ||= [];
+  state.reminders.push({ id: `${Date.now()}`, text, date, createdAt: Date.now() });
+  saveState();
+  textInput.value = "";
+  dateInput.value = shiftedDateKey(1);
+  renderHomeReminders();
+  if (currentArchiveTab === "routines") renderHabitSchedule();
+  confirmControl(document.querySelector("#reminder-save"), "REMINDER SET");
+  showToast(`reminder set for ${date}`);
+}
+
+function removeReminder(id) {
+  state.reminders = (state.reminders || []).filter((reminder) => reminder.id !== id);
+  saveState();
+  renderHomeReminders();
+  if (currentArchiveTab === "routines") renderHabitSchedule();
+  showToast("reminder removed");
+}
+
+function clearCarryoverMessage() {
+  const yesterday = shiftedDateKey(-1);
+  if (!state.journal?.[yesterday]) return;
+  state.journal[yesterday].futureNote = "";
+  syncDayRecord(yesterday);
+  saveState();
+  renderHomeReminders();
+  showToast("message cleared");
+}
+
+function clearCurrentFutureNote() {
+  const field = document.querySelector("#future-note");
+  field.value = "";
+  const entry = state.journal[dateKey()];
+  if (entry) {
+    entry.futureNote = "";
+    syncDayRecord();
+    saveState();
+  }
+  field.focus();
+  showToast("tomorrow message cleared");
+}
+
 function renderJournal() {
   const today = dateKey();
   const yesterday = new Date();
@@ -1208,6 +1491,7 @@ function renderJournal() {
   const pastEntry = isGeneratedDemoJournal(storedPastEntry) ? {} : storedPastEntry;
   document.querySelector("#journal-body").value = todayEntry.body || "";
   document.querySelector("#future-note").value = todayEntry.futureNote || "";
+  document.querySelector("#future-note-clear")?.classList.toggle("visible", state.settings.editMode && Boolean(todayEntry.futureNote));
   const pastNote = document.querySelector("#past-note");
   const futurePanel = document.querySelector("#future-panel");
   pastNote.textContent = pastEntry.futureNote || "";
@@ -1315,6 +1599,7 @@ function renderHomeArchive() {
       const progress = habitProgress(habit, completed, failures, completionCounts);
       book?.style.setProperty("--mini-delay", `${index * 56}ms`);
       book?.classList.toggle("has-entry", progress > 0);
+      book?.classList.toggle("completed", progress >= 1);
       book?.style.setProperty("--mini-fill", `${Math.round(progress * 100)}%`);
     });
   });
@@ -1667,13 +1952,14 @@ function renderLibrary() {
   const visibleKeys = new Set(keys.slice(-LIBRARY_SHELF_CAPACITY));
   const weeks = keys.map((key) => visibleKeys.has(key) ? archiveWeekFromKey(key) : { key, activeDays: [], days: [] });
   stage.innerHTML = renderLibraryRoom(weeks, weeks);
+  stage.dataset.weekCount = String(keys.length);
 }
 
 function renderHabitSchedule() {
   const container = document.querySelector("#habit-schedule");
   if (!container) return;
   const habits = state.habits;
-  container.innerHTML = habits.length ? habits.map((habit) => `
+  const habitsMarkup = habits.length ? habits.map((habit) => `
     <article class="schedule-card">
       <header>
         <div><strong>${escapeHtml(habit.name)}</strong><small>${habit.type.toUpperCase()} // ${habitTargetCount(habit)}X DAILY // ${formatTimer(habitTimeTotal(habit), true)} TRAINED</small></div>
@@ -1690,6 +1976,20 @@ function renderHabitSchedule() {
       <p>Create one from Home to see its weekly rhythm here.</p>
     </div>
   `;
+  const reminders = [...(state.reminders || [])].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+  const remindersMarkup = `
+    <section class="archive-reminder-schedule">
+      <div class="panel-header"><span>REMINDERS</span><span>${reminders.length} SCHEDULED</span></div>
+      ${reminders.length ? reminders.map((reminder) => `
+        <article class="schedule-reminder">
+          <span>${reminder.date}</span>
+          <strong>${escapeHtml(reminder.text)}</strong>
+          ${state.settings.editMode ? `<button class="terminal-action" type="button" data-reminder-remove="${reminder.id}">DEL</button>` : ""}
+        </article>
+      `).join("") : '<p class="schedule-reminder-empty">NO REMINDERS SCHEDULED</p>'}
+    </section>
+  `;
+  container.innerHTML = habitsMarkup + remindersMarkup;
 }
 
 function significantPrSignals(month = "") {
@@ -1824,45 +2124,54 @@ function renderWeeklyReviews() {
     const done = active.reduce((sum, day) => sum + day.completedCount, 0);
     const focusMinutes = active.reduce((sum, day) => sum + day.focus.reduce((minutes, log) => minutes + (log.focusMinutes || 0), 0), 0);
     const outputs = active.reduce((sum, day) => sum + day.focus.length, 0);
-    return { week, completion: total ? Math.round((done / total) * 100) : 0, focusMinutes, outputs };
+    return { week, completion: total ? Math.round((done / total) * 100) : 0, focusMinutes, outputs, habitSamples: total };
   });
   const chartStats = evenlySample(stats);
   const chartWeights = evenlySample(recentWeights);
   const chartCalories = evenlySample(recentCalories);
-  container.innerHTML = `
-    <section class="review-period">
-      <div><span>${currentReviewMonth ? "MONTH REVIEW" : "OVERALL REVIEW"}</span><strong>${periodTitle}</strong><small>${periodRange}</small></div>
-      ${currentReviewMonth ? '<button type="button" data-review-overall>OPEN OVERALL</button>' : '<span class="review-period-state">FROM FIRST RECORD // THROUGH TODAY</span>'}
-    </section>
-    <section class="review-overview">
-      <div><span>WEIGHT CHANGE</span><strong>${weightChange == null ? "--" : `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} KG`}</strong><small>${weightMetrics.length} CHECK-INS</small></div>
-      <div><span>SKILL AVERAGE</span><strong>${state.focus.skills.length ? Math.round(state.focus.skills.reduce((sum, skill) => sum + skill.progress, 0) / state.focus.skills.length) : 0}%</strong><small>${state.focus.skills.length} SKILLS</small></div>
-      <div><span>${currentReviewMonth ? "MONTH OUTPUT" : "TOTAL OUTPUT"}</span><strong>${stats.reduce((sum, item) => sum + item.outputs, 0)}</strong><small>${currentReviewMonth || `${stats.length} WEEKS`}</small></div>
-    </section>
-    <section class="panel review-graph">
-      <div class="panel-header"><span>WEEKLY CONSISTENCY</span><span>${currentReviewMonth || `${stats.length || 0} WEEKS TOTAL`}</span></div>
-      ${lineGraph(chartStats.map((item) => item.completion), chartStats.map((item) => formatDate(item.week.days[0].date, { month: "short", day: "numeric" }).toUpperCase()), 0, 100)}
-    </section>
-    <section class="panel review-graph">
-      <div class="panel-header"><span>BODY WEIGHT TREND</span><span>${weightChange == null ? "NO SIGNAL" : `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} KG`}</span></div>
-      ${lineGraph(chartWeights.map((metric) => metric.weight), chartWeights.map((metric) => metric.date.slice(5)), minWeight, maxWeight)}
-    </section>
-    <section class="panel review-graph">
-      <div class="panel-header"><span>KCAL INTAKE TREND</span><span>${recentCalories.length ? `${recentCalories.at(-1).kcal} KCAL LATEST` : "NO SIGNAL"}</span></div>
-      ${lineGraph(chartCalories.map((entry) => entry.kcal), chartCalories.map((entry) => entry.date.slice(5)), minCalories, maxCalories)}
-      ${recentCalories.length ? `<div class="nutrition-review-strip"><span><small>AVG EATEN</small>${calorieAverage}</span><span><small>AVG BURNED</small>${calorieBurnAverage}</span><span><small>AVG MAINT + BURN</small>${calorieMaintenanceAverage}</span><span class="${calorieOverMaintenance ? "calorie-over" : "calorie-good"}"><small>GOAL DAYS // OVER MAINT</small>${calorieGoalDays}/${recentCalories.length} // ${calorieOverMaintenance}</span></div>` : ""}
-    </section>
-    <section class="panel review-pr-signals">
-      <div class="panel-header"><span>SIGNIFICANT PRS</span><span>${prSignals.length} RECORD SIGNALS</span></div>
-      ${prSignals.length ? `<div class="review-pr-grid">${prSignals.map((entry) => `
-        <article>
-          <header><strong>${escapeHtml(entry.movement)}</strong><span>${entry.date}</span></header>
-          <p>${prDisplayValue(entry)}</p>
-          <small>${entry.repGain ? `+${entry.repGain} REPS` : ""}${entry.repGain && entry.weightGain ? " // " : ""}${entry.weightGain ? `+${entry.weightGain} KG` : ""}</small>
-        </article>
-      `).join("")}</div>` : "<p>NO RECORD BREAKTHROUGHS IN THIS PERIOD.</p>"}
-    </section>
-    ${state.settings.bodyModel && oldestBody ? `
+  const periodSkills = currentReviewMonth
+    ? state.focus.skills.filter((skill) => (skill.progressHistory || []).some((entry) => String(entry.date || "").startsWith(currentReviewMonth)))
+    : state.focus.skills;
+  const totalOutputs = stats.reduce((sum, item) => sum + item.outputs, 0);
+  const overviewCards = [
+    weightMetrics.length ? `<div><span>WEIGHT CHANGE</span><strong>${weightChange == null ? "--" : `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} KG`}</strong><small>${weightMetrics.length} CHECK-INS</small></div>` : "",
+    periodSkills.length ? `<div><span>SKILL AVERAGE</span><strong>${Math.round(periodSkills.reduce((sum, skill) => sum + skill.progress, 0) / periodSkills.length)}%</strong><small>${periodSkills.length} SKILLS</small></div>` : "",
+    totalOutputs ? `<div><span>${currentReviewMonth ? "MONTH OUTPUT" : "TOTAL OUTPUT"}</span><strong>${totalOutputs}</strong><small>${currentReviewMonth || `${stats.length} WEEKS`}</small></div>` : ""
+  ].filter(Boolean);
+  const consistencyStats = chartStats.filter((item) => item.habitSamples > 0);
+  const reviewSections = [
+    consistencyStats.length ? `
+      <section class="panel review-graph">
+        <div class="panel-header"><span>WEEKLY CONSISTENCY</span><span>${currentReviewMonth || `${consistencyStats.length} WEEKS WITH CHECKLIST DATA`}</span></div>
+        ${lineGraph(consistencyStats.map((item) => item.completion), consistencyStats.map((item) => formatDate(item.week.days[0].date, { month: "short", day: "numeric" }).toUpperCase()), 0, 100)}
+      </section>
+    ` : "",
+    chartWeights.length ? `
+      <section class="panel review-graph">
+        <div class="panel-header"><span>BODY WEIGHT TREND</span><span>${weightChange == null ? "NO CHANGE YET" : `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} KG`}</span></div>
+        ${lineGraph(chartWeights.map((metric) => metric.weight), chartWeights.map((metric) => metric.date.slice(5)), minWeight, maxWeight)}
+      </section>
+    ` : "",
+    chartCalories.length ? `
+      <section class="panel review-graph">
+        <div class="panel-header"><span>KCAL INTAKE TREND</span><span>${recentCalories.at(-1).kcal} KCAL LATEST</span></div>
+        ${lineGraph(chartCalories.map((entry) => entry.kcal), chartCalories.map((entry) => entry.date.slice(5)), minCalories, maxCalories)}
+        <div class="nutrition-review-strip"><span><small>AVG EATEN</small>${calorieAverage}</span><span><small>AVG BURNED</small>${calorieBurnAverage}</span><span><small>AVG MAINT + BURN</small>${calorieMaintenanceAverage}</span><span class="${calorieOverMaintenance ? "calorie-over" : "calorie-good"}"><small>GOAL DAYS // OVER MAINT</small>${calorieGoalDays}/${recentCalories.length} // ${calorieOverMaintenance}</span></div>
+      </section>
+    ` : "",
+    prSignals.length ? `
+      <section class="panel review-pr-signals">
+        <div class="panel-header"><span>SIGNIFICANT PRS</span><span>${prSignals.length} RECORD SIGNALS</span></div>
+        <div class="review-pr-grid">${prSignals.map((entry) => `
+          <article>
+            <header><strong>${escapeHtml(entry.movement)}</strong><span>${entry.date}</span></header>
+            <p>${prDisplayValue(entry)}</p>
+            <small>${entry.repGain ? `+${entry.repGain} REPS` : ""}${entry.repGain && entry.weightGain ? " // " : ""}${entry.weightGain ? `+${entry.weightGain} KG` : ""}</small>
+          </article>
+        `).join("")}</div>
+      </section>
+    ` : "",
+    state.settings.bodyModel && oldestBody ? `
       <section class="panel review-body-models">
         <div class="body-comparison-toolbar">
           <div><strong>OLDEST // NEWEST</strong><small>${oldestBody.date} // ${newestBody.date}</small></div>
@@ -1874,13 +2183,23 @@ function renderWeeklyReviews() {
         </div>
         <div class="body-comparison-key"><span><i></i>OLDEST // ${formatMetric(oldestBody.weight, " KG")}</span><span><i></i>NEWEST // ${formatMetric(newestBody.weight, " KG")}</span></div>
       </section>
-    ` : ""}
-    <section class="panel review-skills">
-      <div class="panel-header"><span>SKILL SIGNAL</span><span>CURRENT STATE</span></div>
-      ${state.focus.skills.length ? state.focus.skills.slice(0, 5).map((skill) => `
-        <div><header><strong>${escapeHtml(skill.name)}</strong><span>${skill.progress}%</span></header><i><span style="width:${skill.progress}%"></span></i></div>
-      `).join("") : "<p>NO SKILLS TRACKED.</p>"}
+    ` : "",
+    periodSkills.length ? `
+      <section class="panel review-skills">
+        <div class="panel-header"><span>SKILL SIGNAL</span><span>CURRENT STATE</span></div>
+        ${periodSkills.slice(0, 5).map((skill) => `
+          <div><header><strong>${escapeHtml(skill.name)}</strong><span>${skill.progress}%</span></header><i><span style="width:${skill.progress}%"></span></i></div>
+        `).join("")}
+      </section>
+    ` : ""
+  ].filter(Boolean);
+  container.innerHTML = `
+    <section class="review-period">
+      <div><span>${currentReviewMonth ? "MONTH REVIEW" : "LIFETIME REVIEW"}</span><strong>${periodTitle}</strong><small>${periodRange}</small></div>
+      <span class="review-period-state">${currentReviewMonth ? "OPENED FROM MONTH SHELF" : "FROM FIRST RECORD // THROUGH TODAY"}</span>
     </section>
+    ${overviewCards.length ? `<section class="review-overview">${overviewCards.join("")}</section>` : ""}
+    ${reviewSections.length ? reviewSections.join("") : '<div class="archive-empty review-empty"><strong>NOT ENOUGH SIGNAL YET</strong><p>Add checklist, body, nutrition, PR, focus, or skill data to build this review.</p></div>'}
   `;
 }
 
@@ -2444,7 +2763,7 @@ function renderCalories() {
   mealList.innerHTML = todayEntry.meals.length
     ? todayEntry.meals.map((meal, index) => `
       <article class="calorie-meal-card">
-        <header><span>MEAL ${String(index + 1).padStart(2, "0")} ${meal.time ? `// ${meal.time}` : ""}</span><button class="terminal-action" type="button" data-calorie-meal-remove="${meal.id}">DELETE</button></header>
+        <header><span>MEAL ${String(index + 1).padStart(2, "0")} ${meal.time ? `// ${meal.time}` : ""}</span><span class="calorie-card-actions"><button class="terminal-action" type="button" data-calorie-meal-edit="${meal.id}">EDIT</button><button class="terminal-action" type="button" data-calorie-meal-remove="${meal.id}">DEL</button></span></header>
         <div><strong>${escapeHtml(meal.name)}</strong><span>${meal.kcal} KCAL // ${meal.protein || 0} G PROTEIN</span></div>
         ${meal.note ? `<p>${escapeHtml(meal.note)}</p>` : ""}
       </article>
@@ -2453,7 +2772,7 @@ function renderCalories() {
   activityList.innerHTML = todayEntry.activities.length
     ? todayEntry.activities.map((activity, index) => `
       <article class="calorie-activity-card">
-        <header><span>ACTIVITY ${String(index + 1).padStart(2, "0")} ${activity.time ? `// ${activity.time}` : ""}</span><button class="terminal-action" type="button" data-calorie-activity-remove="${activity.id}">DELETE</button></header>
+        <header><span>ACTIVITY ${String(index + 1).padStart(2, "0")} ${activity.time ? `// ${activity.time}` : ""}</span><span class="calorie-card-actions"><button class="terminal-action" type="button" data-calorie-activity-edit="${activity.id}">EDIT</button><button class="terminal-action" type="button" data-calorie-activity-remove="${activity.id}">DEL</button></span></header>
         <div><strong>${escapeHtml(activity.name)}</strong><span>+${activity.kcal} KCAL BUDGET</span></div>
         ${activity.note ? `<p>${escapeHtml(activity.note)}</p>` : ""}
       </article>
@@ -2525,6 +2844,7 @@ function saveCalorieGoals() {
   renderCalories();
   renderHomeArchive();
   if (currentArchiveTab === "reviews") renderWeeklyReviews();
+  confirmControl(document.querySelector("#calorie-goals-save"), "TARGETS SAVED");
   showToast("energy targets saved");
 }
 
@@ -2538,23 +2858,42 @@ function saveCalorieMeal() {
     return;
   }
   const entry = ensureTodayCalorieEntry();
-  entry.meals.push({
-    id: `${Date.now()}`,
+  const existing = entry.meals.find((meal) => meal.id === editingCalorieMealId);
+  const meal = {
+    id: existing?.id || `${Date.now()}`,
     name,
     kcal,
     protein,
     note,
-    time: new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date())
-  });
+    time: existing?.time || new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date())
+  };
+  if (existing) Object.assign(existing, meal);
+  else entry.meals.push(meal);
   entry.kcal = entry.meals.reduce((sum, meal) => sum + meal.kcal, 0);
   entry.protein = entry.meals.reduce((sum, meal) => sum + meal.protein, 0);
   syncDayRecord(entry.date);
   saveState();
   document.querySelector("#calorie-meal-form").reset();
+  editingCalorieMealId = null;
+  document.querySelector("#calorie-meal-save").textContent = "ADD MEAL";
   renderCalories();
   renderHomeArchive();
   if (currentArchiveTab === "reviews") renderWeeklyReviews();
-  showToast(`${name} added`);
+  confirmControl(document.querySelector("#calorie-meal-save"), existing ? "MEAL SAVED" : "MEAL ADDED");
+  showToast(existing ? `${name} updated` : `${name} added`);
+}
+
+function editCalorieMeal(id) {
+  const entry = state.body.calories.find((item) => item.date === dateKey());
+  const meal = entry?.meals?.find((item) => item.id === id);
+  if (!meal) return;
+  editingCalorieMealId = id;
+  document.querySelector("#calorie-meal-name").value = meal.name;
+  document.querySelector("#calorie-meal-kcal").value = meal.kcal;
+  document.querySelector("#calorie-meal-protein").value = meal.protein || "";
+  document.querySelector("#calorie-meal-note").value = meal.note || "";
+  document.querySelector("#calorie-meal-save").textContent = "SAVE MEAL";
+  document.querySelector("#calorie-meal-form").scrollIntoView({ block: "center", behavior: state.settings.motion ? "smooth" : "auto" });
 }
 
 function removeCalorieMeal(id) {
@@ -2563,6 +2902,11 @@ function removeCalorieMeal(id) {
   entry.meals = entry.meals.filter((meal) => meal.id !== id);
   entry.kcal = entry.meals.reduce((sum, meal) => sum + meal.kcal, 0);
   entry.protein = entry.meals.reduce((sum, meal) => sum + meal.protein, 0);
+  if (editingCalorieMealId === id) {
+    editingCalorieMealId = null;
+    document.querySelector("#calorie-meal-form").reset();
+    document.querySelector("#calorie-meal-save").textContent = "ADD MEAL";
+  }
   syncDayRecord(entry.date);
   saveState();
   renderCalories();
@@ -2580,21 +2924,39 @@ function saveCalorieActivity() {
     return;
   }
   const entry = ensureTodayCalorieEntry();
-  entry.activities.push({
-    id: `${Date.now()}`,
+  const existing = entry.activities.find((activity) => activity.id === editingCalorieActivityId);
+  const activity = {
+    id: existing?.id || `${Date.now()}`,
     name,
     kcal,
     note,
-    time: new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date())
-  });
+    time: existing?.time || new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date())
+  };
+  if (existing) Object.assign(existing, activity);
+  else entry.activities.push(activity);
   entry.burnedKcal = entry.activities.reduce((sum, activity) => sum + activity.kcal, 0);
   syncDayRecord(entry.date);
   saveState();
   document.querySelector("#calorie-activity-form").reset();
+  editingCalorieActivityId = null;
+  document.querySelector("#calorie-activity-save").textContent = "ADD ACTIVITY";
   renderCalories();
   renderHomeArchive();
   if (currentArchiveTab === "reviews") renderWeeklyReviews();
-  showToast(`${name} activity added`);
+  confirmControl(document.querySelector("#calorie-activity-save"), existing ? "ACTIVITY SAVED" : "ACTIVITY ADDED");
+  showToast(existing ? `${name} activity updated` : `${name} activity added`);
+}
+
+function editCalorieActivity(id) {
+  const entry = state.body.calories.find((item) => item.date === dateKey());
+  const activity = entry?.activities?.find((item) => item.id === id);
+  if (!activity) return;
+  editingCalorieActivityId = id;
+  document.querySelector("#calorie-activity-name").value = activity.name;
+  document.querySelector("#calorie-activity-kcal").value = activity.kcal;
+  document.querySelector("#calorie-activity-note").value = activity.note || "";
+  document.querySelector("#calorie-activity-save").textContent = "SAVE ACTIVITY";
+  document.querySelector("#calorie-activity-form").scrollIntoView({ block: "center", behavior: state.settings.motion ? "smooth" : "auto" });
 }
 
 function removeCalorieActivity(id) {
@@ -2602,6 +2964,11 @@ function removeCalorieActivity(id) {
   if (!entry) return;
   entry.activities = (entry.activities || []).filter((activity) => activity.id !== id);
   entry.burnedKcal = entry.activities.reduce((sum, activity) => sum + activity.kcal, 0);
+  if (editingCalorieActivityId === id) {
+    editingCalorieActivityId = null;
+    document.querySelector("#calorie-activity-form").reset();
+    document.querySelector("#calorie-activity-save").textContent = "ADD ACTIVITY";
+  }
   syncDayRecord(entry.date);
   saveState();
   renderCalories();
@@ -3641,17 +4008,24 @@ function toggleTabVisibility(tab) {
 
 function applyTheme(theme) {
   const themes = {
-    violet: { accent: [157, 141, 188], strong: [201, 191, 217] },
-    deep: { accent: [117, 83, 159], strong: [183, 155, 214] },
-    ember: { accent: [149, 83, 91], strong: [212, 154, 159] },
-    slate: { accent: [116, 114, 123], strong: [200, 197, 206] }
+    violet: { accent: [74, 154, 190], strong: [153, 216, 232], surface: [7, 18, 23] },
+    deep: { accent: [112, 76, 160], strong: [188, 153, 222], surface: [14, 8, 22] },
+    ember: { accent: [170, 79, 63], strong: [235, 157, 125], surface: [24, 9, 7] },
+    slate: { accent: [157, 132, 72], strong: [224, 198, 126], surface: [22, 17, 7] }
   };
   const selectedTheme = theme in themes ? theme : "violet";
   const vividness = ["soft", "balanced", "vivid"].includes(state.settings.colorVividness) ? state.settings.colorVividness : "balanced";
-  const mix = vividness === "soft" ? 0.84 : vividness === "vivid" ? 1.1 : 1;
-  const adjust = (values) => values.map((value) => Math.round(Math.max(0, Math.min(255, value * mix + (vividness === "soft" ? 14 : 0)))));
+  const mix = vividness === "soft" ? 0.78 : vividness === "vivid" ? 1.13 : 1;
+  const adjust = (values) => values.map((value) => Math.round(Math.max(0, Math.min(255, value * mix + (vividness === "soft" ? 10 : 0)))));
   const accent = adjust(themes[selectedTheme].accent);
   const strong = adjust(themes[selectedTheme].strong);
+  const surface = themes[selectedTheme].surface;
+  const vividnessMap = {
+    soft: { wash: 0.018, glow: 0.055, grid: 0.008, saturation: 0.84 },
+    balanced: { wash: 0.055, glow: 0.12, grid: 0.015, saturation: 1 },
+    vivid: { wash: 0.11, glow: 0.22, grid: 0.026, saturation: 1.18 }
+  };
+  const impact = vividnessMap[vividness];
   state.settings.theme = selectedTheme;
   document.body.dataset.theme = selectedTheme;
   document.body.dataset.colorVividness = vividness;
@@ -3669,6 +4043,13 @@ function applyTheme(theme) {
     document.body.style.setProperty("--accent-rgb", roundedAccent.join(", "));
     document.body.style.setProperty("--accent", `rgb(${roundedAccent.join(" ")})`);
     document.body.style.setProperty("--accent-strong", `rgb(${roundedStrong.join(" ")})`);
+    document.documentElement.style.setProperty("--accent-rgb", roundedAccent.join(", "));
+    document.documentElement.style.setProperty("--theme-surface-rgb", surface.join(", "));
+    document.documentElement.style.setProperty("--theme-wash", String(impact.wash));
+    document.documentElement.style.setProperty("--theme-glow", String(impact.glow));
+    document.documentElement.style.setProperty("--theme-grid", String(impact.grid));
+    document.documentElement.style.setProperty("--theme-saturation", String(impact.saturation));
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", `rgb(${surface.map((value) => Math.round(value * 0.28)).join(" ")})`);
   };
   cancelAnimationFrame(themeColorFrame);
   const unchanged = currentAccent?.every((value, index) => Math.round(value) === accent[index])
@@ -3711,8 +4092,52 @@ function clearData(button) {
   showToast("local data cleared");
 }
 
+function exportPrivateBackup() {
+  const payload = {
+    app: "Archive",
+    version: 67,
+    exportedAt: new Date().toISOString(),
+    state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `archive-private-backup-${dateKey()}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  confirmControl(document.querySelector("#export-backup"), "EXPORTED");
+  showToast("private backup exported");
+}
+
+async function importPrivateBackup(file) {
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    const imported = payload?.state || payload;
+    if (!imported || typeof imported !== "object" || !Array.isArray(imported.habits)) throw new Error("Invalid backup");
+    state = mergeCurrentStateShape(imported);
+    state.persistedAt = Date.now();
+    archiveWeekKeyCache = null;
+    archiveSearchIndexCache.clear();
+    saveStartupSnapshot(state);
+    if (durableStorageReady) await writeDurableState(state);
+    else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    renderAll();
+    confirmControl(document.querySelector("#import-backup"), "IMPORTED");
+    showToast("private backup restored");
+  } catch {
+    showToast("backup file could not be restored");
+  } finally {
+    document.querySelector("#backup-file").value = "";
+  }
+}
+
 function renderAll() {
   renderHabits();
+  renderHomeReminders();
   renderJournal();
   renderHomeArchive();
   if (currentScreen === "archive") renderArchive();
@@ -3842,9 +4267,28 @@ function bindEvents() {
     const toggle = event.target.closest("[data-habit-toggle]");
     const config = event.target.closest("[data-habit-config]");
     const remove = event.target.closest("[data-habit-remove]");
+    const move = event.target.closest("[data-habit-move]");
     if (toggle) toggleHabit(toggle.dataset.habitToggle);
     if (config) openHabitEditor(state.habits.find((habit) => habit.id === config.dataset.habitConfig)?.name || "", config.dataset.habitConfig);
     if (remove) removeHabit(remove.dataset.habitRemove);
+    if (move && performance.now() > suppressHabitMoveClickUntil) moveHabit(move.dataset.habitMove, Number(move.dataset.habitDirection));
+  });
+  document.querySelector("#habit-list").addEventListener("pointerdown", (event) => {
+    const move = event.target.closest("[data-habit-move]");
+    if (move) beginHabitDrag(move, event);
+  });
+  document.addEventListener("pointermove", updateHabitDrag, { passive: false });
+  document.addEventListener("pointerup", finishHabitDrag);
+  document.addEventListener("pointercancel", finishHabitDrag);
+
+  document.querySelector("#reminder-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    saveReminder();
+  });
+  document.querySelector("#home-screen").addEventListener("click", (event) => {
+    const remove = event.target.closest("[data-reminder-remove]");
+    if (remove) removeReminder(remove.dataset.reminderRemove);
+    if (event.target.closest("[data-dismiss-carryover]")) clearCarryoverMessage();
   });
 
   document.querySelector("#habit-editor-form").addEventListener("submit", (event) => {
@@ -3890,7 +4334,9 @@ function bindEvents() {
   });
   document.querySelector("#habit-schedule").addEventListener("click", (event) => {
     const config = event.target.closest("[data-habit-config]");
+    const reminder = event.target.closest("[data-reminder-remove]");
     if (config && state.settings.editMode) openHabitEditor(state.habits.find((habit) => habit.id === config.dataset.habitConfig)?.name || "", config.dataset.habitConfig);
+    if (reminder && state.settings.editMode) removeReminder(reminder.dataset.reminderRemove);
   });
   document.querySelector("#weekly-reviews").addEventListener("click", (event) => {
     if (event.target.closest("[data-review-overall]")) {
@@ -3932,6 +4378,7 @@ function bindEvents() {
       setTimeout(() => setJournalEditing(document.querySelector("#journal-form").contains(document.activeElement)), 80);
     });
   });
+  document.querySelector("#future-note-clear").addEventListener("click", clearCurrentFutureNote);
 
   document.querySelectorAll("[data-habit-picker]").forEach((picker) => {
     const id = picker.dataset.habitPicker;
@@ -4090,7 +4537,9 @@ function bindEvents() {
     saveCalorieMeal();
   });
   document.querySelector("#calorie-meal-list").addEventListener("click", (event) => {
+    const edit = event.target.closest("[data-calorie-meal-edit]");
     const remove = event.target.closest("[data-calorie-meal-remove]");
+    if (edit) editCalorieMeal(edit.dataset.calorieMealEdit);
     if (remove) removeCalorieMeal(remove.dataset.calorieMealRemove);
   });
   document.querySelector("#calorie-activity-form").addEventListener("submit", (event) => {
@@ -4098,7 +4547,9 @@ function bindEvents() {
     saveCalorieActivity();
   });
   document.querySelector("#calorie-activity-list").addEventListener("click", (event) => {
+    const edit = event.target.closest("[data-calorie-activity-edit]");
     const remove = event.target.closest("[data-calorie-activity-remove]");
+    if (edit) editCalorieActivity(edit.dataset.calorieActivityEdit);
     if (remove) removeCalorieActivity(remove.dataset.calorieActivityRemove);
   });
 
@@ -4183,6 +4634,10 @@ function bindEvents() {
     }
     saveState();
     renderSettings();
+    renderHabits();
+    renderHomeReminders();
+    renderJournal();
+    if (currentArchiveTab === "routines") renderHabitSchedule();
     showToast(`layout editing ${state.settings.editMode ? "enabled" : "disabled"}`);
   });
 
@@ -4220,8 +4675,12 @@ function bindEvents() {
   });
 
   document.querySelector("#clear-data").addEventListener("click", (event) => clearData(event.currentTarget));
+  document.querySelector("#export-backup").addEventListener("click", exportPrivateBackup);
+  document.querySelector("#import-backup").addEventListener("click", () => document.querySelector("#backup-file").click());
+  document.querySelector("#backup-file").addEventListener("change", (event) => importPrivateBackup(event.currentTarget.files?.[0]));
 
   window.visualViewport?.addEventListener("resize", updateVisualViewport);
+  window.addEventListener("scroll", updateOverscrollGlow, { passive: true });
   document.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) finishAllScrambles();
@@ -4278,7 +4737,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=66", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=67", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);
