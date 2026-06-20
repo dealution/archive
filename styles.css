@@ -17668,10 +17668,14 @@ body.edit-mode .habit-item {
 /* v68: invisible touch geometry, coherent theme highlights, continuous background, and calmer type. */
 :root {
   --premium-font: "Bahnschrift", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --gradient-glow: .065;
+  --gradient-wash: .025;
+  --gradient-grid: .009;
+  --gradient-stage: .018;
   background:
-    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), .065), transparent 70%),
-    linear-gradient(rgba(var(--accent-rgb), .009) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--accent-rgb), .009) 1px, transparent 1px),
+    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), var(--gradient-glow)), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), var(--gradient-grid)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), var(--gradient-grid)) 1px, transparent 1px),
     #020202 !important;
   background-size: auto, 28px 28px, 28px 28px, auto !important;
   background-attachment: fixed !important;
@@ -17687,10 +17691,10 @@ body,
 body {
   min-height: 100%;
   background:
-    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), .065), transparent 70%),
-    linear-gradient(rgba(var(--accent-rgb), .009) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--accent-rgb), .009) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), .025), transparent 58%),
+    radial-gradient(ellipse 112% 46% at 50% -12%, rgba(var(--accent-rgb), var(--gradient-glow)), transparent 70%),
+    linear-gradient(rgba(var(--accent-rgb), var(--gradient-grid)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), var(--gradient-grid)) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), var(--gradient-wash)), transparent 58%),
     #020202 !important;
   background-size: auto, 28px 28px, 28px 28px, auto, auto !important;
   background-attachment: fixed !important;
@@ -17700,7 +17704,7 @@ body {
 .screen-stage {
   min-height: 100svh;
   background:
-    linear-gradient(to bottom, rgba(var(--accent-rgb), .018), transparent 34rem),
+    linear-gradient(to bottom, rgba(var(--accent-rgb), var(--gradient-stage)), transparent 34rem),
     transparent !important;
 }
 
@@ -17711,6 +17715,18 @@ body::before {
   background-size: 7px 7px !important;
   mask-image: none !important;
   -webkit-mask-image: none !important;
+}
+
+body::after {
+  position: fixed;
+  z-index: 0;
+  top: -26vh;
+  right: -20vw;
+  left: -20vw;
+  height: 92vh;
+  pointer-events: none;
+  background: radial-gradient(ellipse 68% 60% at 50% 28%, rgba(var(--accent-rgb), var(--gradient-glow)), transparent 74%);
+  content: "";
 }
 
 .overscroll-glow {
@@ -17811,6 +17827,7 @@ body::before {
   .config-tabs button.active,
   .theme-options button.active,
   .color-vividness-options button.active,
+  .gradient-strength-options button.active,
   .startup-options button.active,
   .tab-visibility-options button.active,
   .day-options input:checked + span,
@@ -17820,6 +17837,12 @@ body::before {
   background: rgba(var(--accent-rgb), .115) !important;
   color: var(--accent-strong) !important;
   box-shadow: inset 0 -2px rgba(var(--accent-rgb), .34) !important;
+}
+
+.theme-options button.active,
+.color-vividness-options button.active,
+.gradient-strength-options button.active {
+  box-shadow: none !important;
 }
 
 .primary-button:focus-visible,
@@ -17889,6 +17912,132 @@ button:focus-visible {
   font-weight: 400 !important;
   letter-spacing: 0 !important;
   word-spacing: normal !important;
+}
+
+/* Custom small-type dropdowns replace iOS's oversized native menu. */
+.custom-select-source {
+  display: none !important;
+}
+
+.archive-select {
+  position: relative;
+  width: 100%;
+  font-family: var(--code-font);
+}
+
+.archive-select-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 43px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid rgba(var(--accent-rgb), .24);
+  border-radius: 0;
+  background: #050505;
+  color: #d7d4d8;
+  font-family: var(--code-font) !important;
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: .07em;
+  text-align: left;
+}
+
+.archive-select-trigger i {
+  color: rgba(var(--accent-rgb), .8);
+  font-size: 9px;
+  font-style: normal;
+  transition: transform .24s ease;
+}
+
+.archive-select.open .archive-select-trigger {
+  border-color: rgba(var(--accent-rgb), .68);
+  background: rgba(var(--accent-rgb), .045);
+}
+
+.archive-select.open .archive-select-trigger i {
+  transform: rotate(180deg);
+}
+
+.archive-select-menu {
+  position: absolute;
+  z-index: 180;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: grid;
+  max-height: min(260px, 42svh);
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid rgba(var(--accent-rgb), .38);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), .06), transparent 58%),
+    rgba(4,4,4,.98);
+  box-shadow: 0 18px 40px rgba(0,0,0,.58);
+}
+
+.archive-select-menu[hidden] {
+  display: none !important;
+}
+
+.archive-select-menu button {
+  min-height: 36px;
+  padding: 0 9px;
+  border: 0;
+  border-bottom: 1px solid rgba(var(--accent-rgb), .1);
+  background: transparent;
+  color: #aaa5ac;
+  font-family: var(--code-font) !important;
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: .065em;
+  text-align: left;
+}
+
+.archive-select-menu button:last-child {
+  border-bottom: 0;
+}
+
+.archive-select-menu button.active {
+  background: rgba(var(--accent-rgb), .11);
+  color: var(--accent-strong);
+  box-shadow: none !important;
+}
+
+.archive-select-group {
+  padding: 8px 9px 5px;
+  color: rgba(var(--accent-rgb), .58);
+  font-size: 5px;
+  letter-spacing: .11em;
+}
+
+.gradient-strength-setting {
+  align-items: flex-start !important;
+  flex-direction: column;
+  gap: 12px !important;
+  padding: 13px 20px 18px !important;
+}
+
+.gradient-strength-options {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.gradient-strength-setting > div:first-child {
+  width: 100%;
+}
+
+.gradient-strength-options button {
+  min-height: 36px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: #070707;
+  color: #78737b;
+  font-family: var(--code-font);
+  font-size: 5px;
+  letter-spacing: .08em;
 }
 
 .habit-name {

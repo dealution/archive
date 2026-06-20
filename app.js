@@ -85,6 +85,7 @@ const initialState = {
     explanatoryText: true,
     theme: "violet",
     colorVividness: "balanced",
+    gradientStrength: "balanced",
     editMode: false,
     startScreen: "home",
     bodyModel: true,
@@ -216,6 +217,7 @@ let layoutHomeGroupPressOrder = [];
 const scrambleTimers = new Map();
 const pulseTimers = new WeakMap();
 const formSubmitTimes = new WeakMap();
+const customSelectRegistry = new WeakMap();
 const SCRAMBLE_SYMBOLS = "01._-+";
 
 function masteredTimestamp(skill) {
@@ -353,6 +355,9 @@ function loadState() {
         : loaded.settings.signalImpact === "high"
           ? "vivid"
           : "balanced";
+    loaded.settings.gradientStrength = ["soft", "balanced", "strong"].includes(loaded.settings.gradientStrength)
+      ? loaded.settings.gradientStrength
+      : "balanced";
     delete loaded.settings.signalImpact;
     const legacyAreaVisibility = loaded.settings.areaVisibility || {};
     loaded.settings.areaVisibility = {
@@ -637,6 +642,9 @@ function mergeCurrentStateShape(saved) {
             : saved.settings?.signalImpact === "high"
               ? "vivid"
               : "balanced",
+      gradientStrength: ["soft", "balanced", "strong"].includes(saved.settings?.gradientStrength)
+        ? saved.settings.gradientStrength
+        : "balanced",
       areaVisibility: { ...initialState.settings.areaVisibility, ...(saved.settings?.areaVisibility || {}) },
       bodySummaryVisibility: normalizeBodySummaryVisibility(saved.settings?.bodySummaryVisibility),
       focusSummaryVisibility: normalizeFocusSummaryVisibility(saved.settings?.focusSummaryVisibility),
@@ -3518,6 +3526,7 @@ function renderProjects() {
     <optgroup label="SKILLS">${state.focus.skills.map((skill) => `<option value="skill:${skill.id}">${escapeHtml(skill.name)} // ${skill.progress}%</option>`).join("")}</optgroup>
   `;
   select.value = [...select.options].some((option) => option.value === previous) ? previous : "";
+  syncCustomSelect(select);
 }
 
 function saveProject() {
@@ -3537,6 +3546,7 @@ function saveProject() {
   editingProjectId = null;
   document.querySelector("#project-form").reset();
   document.querySelector("#project-status").value = "active";
+  syncCustomSelect(document.querySelector("#project-status"));
   document.querySelector("#project-form .primary-button").textContent = "SAVE PROJECT";
   saveState();
   renderFocus();
@@ -3550,6 +3560,7 @@ function editProject(id) {
   document.querySelector("#project-name").value = project.name;
   document.querySelector("#project-outcome").value = project.outcome;
   document.querySelector("#project-status").value = project.status;
+  syncCustomSelect(document.querySelector("#project-status"));
   document.querySelector("#project-form .primary-button").textContent = "UPDATE PROJECT";
   document.querySelector("#project-form").scrollIntoView({ behavior: state.settings.motion ? "smooth" : "auto", block: "start" });
 }
@@ -3813,6 +3824,99 @@ function setToggle(button, active) {
   button.setAttribute("aria-checked", String(active));
 }
 
+function closeCustomSelects(except = null) {
+  document.querySelectorAll(".archive-select.open").forEach((shell) => {
+    if (shell === except) return;
+    shell.classList.remove("open");
+    shell.querySelector(".archive-select-menu").hidden = true;
+    shell.querySelector(".archive-select-trigger").setAttribute("aria-expanded", "false");
+  });
+}
+
+function syncCustomSelect(select) {
+  const controls = customSelectRegistry.get(select);
+  if (!controls) return;
+  const selected = select.selectedOptions[0] || select.options[0];
+  controls.label.textContent = selected?.textContent?.trim() || "SELECT";
+  controls.menu.replaceChildren();
+  [...select.children].forEach((child) => {
+    if (child instanceof HTMLOptGroupElement) {
+      const groupLabel = document.createElement("span");
+      groupLabel.className = "archive-select-group";
+      groupLabel.textContent = child.label;
+      controls.menu.append(groupLabel);
+      [...child.children].forEach((option) => appendCustomSelectOption(select, controls.menu, option));
+    } else if (child instanceof HTMLOptionElement) {
+      appendCustomSelectOption(select, controls.menu, child);
+    }
+  });
+  controls.trigger.disabled = select.disabled;
+}
+
+function appendCustomSelectOption(select, menu, option) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.dataset.selectValue = option.value;
+  button.className = option.value === select.value ? "active" : "";
+  button.disabled = option.disabled;
+  button.setAttribute("role", "option");
+  button.setAttribute("aria-selected", String(option.value === select.value));
+  button.textContent = option.textContent.trim();
+  menu.append(button);
+}
+
+function enhanceCustomSelect(select) {
+  if (customSelectRegistry.has(select)) {
+    syncCustomSelect(select);
+    return;
+  }
+  const shell = document.createElement("div");
+  shell.className = "archive-select";
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "archive-select-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  const label = document.createElement("span");
+  const marker = document.createElement("i");
+  marker.textContent = "⌄";
+  trigger.append(label, marker);
+  const menu = document.createElement("div");
+  menu.className = "archive-select-menu";
+  menu.setAttribute("role", "listbox");
+  menu.hidden = true;
+  shell.append(trigger, menu);
+  select.classList.add("custom-select-source");
+  select.tabIndex = -1;
+  select.setAttribute("aria-hidden", "true");
+  select.after(shell);
+  customSelectRegistry.set(select, { shell, trigger, label, menu });
+
+  trigger.addEventListener("click", () => {
+    const opening = menu.hidden;
+    closeCustomSelects(opening ? shell : null);
+    menu.hidden = !opening;
+    shell.classList.toggle("open", opening);
+    trigger.setAttribute("aria-expanded", String(opening));
+  });
+  menu.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-select-value]");
+    if (!option) return;
+    select.value = option.dataset.selectValue;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    syncCustomSelect(select);
+    closeCustomSelects();
+    pulseControl(shell);
+  });
+  select.form?.addEventListener("reset", () => setTimeout(() => syncCustomSelect(select), 0));
+  new MutationObserver(() => syncCustomSelect(select)).observe(select, { childList: true, subtree: true });
+  syncCustomSelect(select);
+}
+
+function initializeCustomSelects() {
+  document.querySelectorAll(".focus-form select").forEach(enhanceCustomSelect);
+}
+
 function setConfigTab(tab) {
   currentConfigTab = ["general", "layout", "themes"].includes(tab) ? tab : "general";
   document.querySelectorAll("[data-config-tab]").forEach((button) => {
@@ -3842,6 +3946,11 @@ function renderSettings() {
   });
   document.querySelectorAll("[data-color-vividness]").forEach((button) => {
     const active = button.dataset.colorVividness === state.settings.colorVividness;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-checked", String(active));
+  });
+  document.querySelectorAll("[data-gradient-strength]").forEach((button) => {
+    const active = button.dataset.gradientStrength === state.settings.gradientStrength;
     button.classList.toggle("active", active);
     button.setAttribute("aria-checked", String(active));
   });
@@ -4015,6 +4124,7 @@ function applyTheme(theme) {
   };
   const selectedTheme = theme in themes ? theme : "violet";
   const vividness = ["soft", "balanced", "vivid"].includes(state.settings.colorVividness) ? state.settings.colorVividness : "balanced";
+  const gradientStrength = ["soft", "balanced", "strong"].includes(state.settings.gradientStrength) ? state.settings.gradientStrength : "balanced";
   const mix = vividness === "soft" ? 0.78 : vividness === "vivid" ? 1.13 : 1;
   const adjust = (values) => values.map((value) => Math.round(Math.max(0, Math.min(255, value * mix + (vividness === "soft" ? 10 : 0)))));
   const accent = adjust(themes[selectedTheme].accent);
@@ -4026,9 +4136,17 @@ function applyTheme(theme) {
     vivid: { wash: 0.11, glow: 0.22, grid: 0.026, saturation: 1.18 }
   };
   const impact = vividnessMap[vividness];
+  const gradientMap = {
+    soft: { glow: 0.034, wash: 0.012, grid: 0.005, stage: 0.01 },
+    balanced: { glow: 0.065, wash: 0.025, grid: 0.009, stage: 0.018 },
+    strong: { glow: 0.105, wash: 0.045, grid: 0.014, stage: 0.032 }
+  };
+  const gradient = gradientMap[gradientStrength];
   state.settings.theme = selectedTheme;
+  state.settings.gradientStrength = gradientStrength;
   document.body.dataset.theme = selectedTheme;
   document.body.dataset.colorVividness = vividness;
+  document.body.dataset.gradientStrength = gradientStrength;
   delete document.body.dataset.signalImpact;
   const parseRgb = (value) => {
     const numbers = String(value || "").match(/\d+(?:\.\d+)?/g)?.slice(0, 3).map(Number);
@@ -4049,6 +4167,10 @@ function applyTheme(theme) {
     document.documentElement.style.setProperty("--theme-glow", String(impact.glow));
     document.documentElement.style.setProperty("--theme-grid", String(impact.grid));
     document.documentElement.style.setProperty("--theme-saturation", String(impact.saturation));
+    document.documentElement.style.setProperty("--gradient-glow", String(gradient.glow));
+    document.documentElement.style.setProperty("--gradient-wash", String(gradient.wash));
+    document.documentElement.style.setProperty("--gradient-grid", String(gradient.grid));
+    document.documentElement.style.setProperty("--gradient-stage", String(gradient.stage));
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", `rgb(${surface.map((value) => Math.round(value * 0.28)).join(" ")})`);
   };
   cancelAnimationFrame(themeColorFrame);
@@ -4095,7 +4217,7 @@ function clearData(button) {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 67,
+    version: 69,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -4395,9 +4517,13 @@ function bindEvents() {
   });
   document.addEventListener("click", (event) => {
     if (!event.target.closest("[data-habit-picker]")) closeHabitPickers();
+    if (!event.target.closest(".archive-select")) closeCustomSelects();
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeHabitPickers();
+    if (event.key === "Escape") {
+      closeHabitPickers();
+      closeCustomSelects();
+    }
   });
 
   document.querySelectorAll("[data-timer-tab]").forEach((button) => button.addEventListener("click", () => setTimerTab(button.dataset.timerTab)));
@@ -4670,6 +4796,14 @@ function bindEvents() {
     });
   });
 
+  document.querySelectorAll("[data-gradient-strength]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.settings.gradientStrength = button.dataset.gradientStrength;
+      saveState();
+      renderSettings();
+    });
+  });
+
   document.querySelectorAll("[data-tab-visibility]").forEach((button) => {
     button.addEventListener("click", () => toggleTabVisibility(button.dataset.tabVisibility));
   });
@@ -4714,6 +4848,7 @@ function startApp() {
     trackStartedAt = 0;
   }
   renderAll();
+  initializeCustomSelects();
   bindEvents();
   if (focusRunning) focusInterval = setInterval(updateFocusClock, 1000);
   if (trackRunning) trackInterval = setInterval(updateTrackClock, 1000);
@@ -4737,7 +4872,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=68", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=69", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);
