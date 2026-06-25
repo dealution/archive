@@ -4403,7 +4403,7 @@ function clearData() {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 78,
+    version: 79,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -5089,7 +5089,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=78", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=79", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);

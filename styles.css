@@ -19688,6 +19688,14 @@ body::after {
   gap: 8px;
 }
 
+#completion-percent {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-user) !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: .01em !important;
+}
+
 .archive-book.sealed-book {
   border-color: rgba(var(--accent-rgb), .8) !important;
   box-shadow:
