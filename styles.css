@@ -19757,3 +19757,92 @@ body::after {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ===== v80: modal lock, no habit-config zoom, smaller checklist percent ===== */
+
+html,
+body,
+.screen-stage {
+  touch-action: pan-y !important;
+}
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+body.modal-open {
+  position: fixed !important;
+  right: 0;
+  left: 0;
+  width: 100%;
+  min-height: var(--visual-height, 100vh);
+}
+
+body.modal-open .screen-stage,
+body.modal-open .topbar,
+body.modal-open .overscroll-glow {
+  touch-action: none !important;
+}
+
+dialog[open] {
+  overscroll-behavior: contain !important;
+}
+
+body.modal-open dialog[open],
+body.modal-open dialog[open] * {
+  touch-action: pan-y !important;
+}
+
+body.modal-open dialog[open] :where(button, input, textarea, select, label) {
+  touch-action: manipulation !important;
+}
+
+.habit-editor[open] {
+  max-height: min(calc(var(--visual-height, 100vh) - 18px), 760px) !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  animation: habit-editor-slide-in .28s cubic-bezier(.18,.86,.2,1) both;
+}
+
+.habit-editor[open] .habit-editor-shell {
+  max-height: min(calc(var(--visual-height, 100vh) - 18px), 760px) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
+}
+
+.habit-editor[open] :where(input, textarea, select) {
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+}
+
+#completion-percent {
+  font-family: var(--code-font) !important;
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: .055em !important;
+}
+
+@keyframes habit-editor-slide-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .habit-editor[open] {
+    animation-duration: .01ms !important;
+  }
+}

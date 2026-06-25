@@ -219,6 +219,8 @@ let libraryOpenTimer;
 let themeColorFrame;
 let configLoadingTimer;
 let overscrollFrame;
+let modalLockActive = false;
+let modalScrollY = 0;
 let suppressHabitMoveClickUntil = 0;
 let habitDragState = null;
 let layoutTabPressOrder = [];
@@ -836,13 +838,13 @@ function openDayArchiveDialog() {
     ? "This seals today into one archive book. If you add more today, the same book updates instead of duplicating."
     : "No signal is recorded yet. You can still create an empty sealed day, or let Archive autosave once you add something.";
   summaryBox.innerHTML = archiveDaySummaryMarkup(summary);
-  if (!dialog.open) dialog.showModal();
+  showModalLocked(dialog);
   requestAnimationFrame(() => document.querySelector("#day-archive-confirm")?.focus({ preventScroll: true }));
 }
 
 function closeDayArchiveDialog() {
   const dialog = document.querySelector("#day-archive-dialog");
-  if (dialog?.open) dialog.close();
+  closeModalUnlocked(dialog);
 }
 
 function archiveTodayManually() {
@@ -1076,7 +1078,11 @@ function showReleaseNotice() {
   if (releaseNoticeWasSeen()) return;
   const dialog = document.querySelector("#release-dialog");
   if (!dialog || dialog.open) return;
-  dialog.showModal();
+  if ([...document.querySelectorAll("dialog")].some((item) => item.open)) {
+    setTimeout(showReleaseNotice, 520);
+    return;
+  }
+  showModalLocked(dialog);
   requestAnimationFrame(() => dialog.classList.add("visible"));
 }
 
@@ -1087,7 +1093,7 @@ function closeReleaseNotice() {
   dialog.classList.remove("visible");
   dialog.classList.add("closing");
   setTimeout(() => {
-    dialog.close();
+    closeModalUnlocked(dialog);
     dialog.classList.remove("closing");
   }, 240);
 }
@@ -1133,6 +1139,48 @@ function updateOverscrollGlow() {
     const pull = Math.max(0, Math.min(120, -window.scrollY));
     document.documentElement.style.setProperty("--overscroll-light", (pull / 120).toFixed(3));
   });
+}
+
+function syncModalLock() {
+  const hasOpenModal = [...document.querySelectorAll("dialog")].some((dialog) => dialog.open);
+  if (hasOpenModal && !modalLockActive) {
+    modalLockActive = true;
+    modalScrollY = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
+    document.documentElement.classList.add("modal-open");
+    document.body.classList.add("modal-open");
+    document.body.style.top = `-${modalScrollY}px`;
+    return;
+  }
+  if (!hasOpenModal && modalLockActive) {
+    modalLockActive = false;
+    document.documentElement.classList.remove("modal-open");
+    document.body.classList.remove("modal-open");
+    document.body.style.top = "";
+    window.scrollTo({ top: modalScrollY, behavior: "auto" });
+  }
+}
+
+function showModalLocked(dialog) {
+  if (!dialog) return false;
+  if (!dialog.open) dialog.showModal();
+  syncModalLock();
+  return true;
+}
+
+function closeModalUnlocked(dialog) {
+  if (!dialog?.open) {
+    syncModalLock();
+    return;
+  }
+  dialog.close();
+  requestAnimationFrame(syncModalLock);
+}
+
+function blockModalBackgroundTouch(event) {
+  if (!modalLockActive) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest("dialog[open] .habit-editor-shell, dialog[open] .book-viewer-shell, dialog[open] .release-dialog-shell, dialog[open] .clear-data-shell, dialog[open] .day-archive-shell")) return;
+  event.preventDefault();
 }
 
 function showScreen(name) {
@@ -1503,7 +1551,7 @@ function openHabitEditor(name = "", id = null) {
   });
   document.querySelector("#habit-editor-target").value = habitTargetCount(habit || { targetCount: 1 });
   document.activeElement?.blur();
-  document.querySelector("#habit-editor").showModal();
+  showModalLocked(document.querySelector("#habit-editor"));
   requestAnimationFrame(() => document.querySelector("#habit-editor-close").focus({ preventScroll: true }));
 }
 
@@ -2464,7 +2512,7 @@ function openArchivedDay(key) {
       </article>
     `).join("");
   document.querySelectorAll("[data-page-key]").forEach((button) => button.classList.toggle("active", button.dataset.pageKey === key));
-  if (!dialog.open) dialog.showModal();
+  showModalLocked(dialog);
   scrambleText(document.querySelector("#book-viewer-title"), document.querySelector("#book-viewer-title").textContent, 420);
 }
 
@@ -4362,7 +4410,7 @@ function applyTheme(theme) {
 function openClearDataDialog() {
   const dialog = document.querySelector("#clear-data-dialog");
   if (!dialog || dialog.open) return;
-  dialog.showModal();
+  showModalLocked(dialog);
   requestAnimationFrame(() => dialog.classList.add("visible"));
   requestAnimationFrame(() => document.querySelector("#clear-data-cancel")?.focus({ preventScroll: true }));
 }
@@ -4373,7 +4421,7 @@ function closeClearDataDialog() {
   dialog.classList.remove("visible");
   dialog.classList.add("closing");
   setTimeout(() => {
-    dialog.close();
+    closeModalUnlocked(dialog);
     dialog.classList.remove("closing");
   }, 220);
 }
@@ -4403,7 +4451,7 @@ function clearData() {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 79,
+    version: 82,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -4558,6 +4606,11 @@ function bindEvents() {
     formSubmitTimes.set(form, now);
   }, true);
 
+  document.querySelectorAll("dialog").forEach((dialog) => {
+    dialog.addEventListener("close", syncModalLock);
+  });
+  document.addEventListener("touchmove", blockModalBackgroundTouch, { passive: false });
+
   document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {
     if (button.dataset.screen === "library" && button.hasAttribute("data-library-portal")) enterLibraryFromHome(button);
     else showScreen(button.dataset.screen);
@@ -4629,11 +4682,11 @@ function bindEvents() {
 
   document.querySelector("#habit-editor-form").addEventListener("submit", (event) => {
     event.preventDefault();
-    if (saveHabitConfiguration()) document.querySelector("#habit-editor").close();
+    if (saveHabitConfiguration()) closeModalUnlocked(document.querySelector("#habit-editor"));
   });
   document.querySelector("#habit-editor-close").addEventListener("click", () => {
     editingHabitId = null;
-    document.querySelector("#habit-editor").close();
+    closeModalUnlocked(document.querySelector("#habit-editor"));
   });
 
   document.querySelector("#archive-list").addEventListener("click", (event) => {
@@ -4692,9 +4745,9 @@ function bindEvents() {
     pulseControl(button);
   });
 
-  document.querySelector("#book-close").addEventListener("click", () => document.querySelector("#book-viewer").close());
+  document.querySelector("#book-close").addEventListener("click", () => closeModalUnlocked(document.querySelector("#book-viewer")));
   document.querySelector("#book-viewer").addEventListener("click", (event) => {
-    if (event.target === event.currentTarget) event.currentTarget.close();
+    if (event.target === event.currentTarget) closeModalUnlocked(event.currentTarget);
   });
   document.querySelector("#book-pages").addEventListener("click", (event) => {
     const page = event.target.closest("[data-page-key]");
@@ -5089,7 +5142,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=79", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=82", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);
