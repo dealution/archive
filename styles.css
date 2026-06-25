@@ -18040,6 +18040,329 @@ button:focus-visible {
   letter-spacing: .08em;
 }
 
+/* v70: one typography system, compact reminders, even highlights, and matched modules. */
+:root {
+  --type-title: clamp(38px, 11vw, 54px);
+  --type-progress: 20px;
+  --type-user: 12px;
+  --type-input: 13px;
+  --type-label: 6px;
+  --type-explain: 7px;
+  --type-meta: 6px;
+}
+
+/* Large screen names. */
+.screen-heading h1,
+.book-viewer h2,
+.habit-editor h2 {
+  font-family: var(--premium-font) !important;
+  font-size: var(--type-title) !important;
+  font-weight: 500 !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.025em !important;
+}
+
+/* Field labels above every user input. */
+.journal-form > label > span:not(.field-label-row),
+.field-label-row > span:first-child,
+.body-form label > span,
+.focus-form label > span,
+.editor-field > span,
+.editor-field > legend,
+.archive-search > span,
+.timer-label,
+.custom-time-form label > span {
+  color: #969099 !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-label) !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+  letter-spacing: .085em !important;
+}
+
+/* Text typed by the user inside fields. */
+:where(.screen, dialog) :where(input:not(.timer-readout-input), textarea),
+.archive-search input {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: .005em !important;
+  word-spacing: normal !important;
+}
+
+:where(input, textarea)::placeholder {
+  color: #68636b !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  font-weight: 400 !important;
+  letter-spacing: .005em !important;
+}
+
+/* User-authored text after it has been saved. */
+.habit-name,
+.today-reminder-card strong,
+.reminder-chip strong,
+.schedule-reminder strong,
+.schedule-card strong,
+.project-card h3,
+.output-card strong,
+.skill-card strong,
+.calorie-meal-card strong,
+.calorie-activity-card strong,
+.book-checklist li > span:last-child,
+.book-journal p,
+.book-focus p,
+.workout-card strong {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-user) !important;
+  font-weight: 400 !important;
+  line-height: 1.42 !important;
+  letter-spacing: .01em !important;
+  word-spacing: normal !important;
+}
+
+/* Large values that communicate progress or totals. */
+.summary-cell strong,
+.focus-summary strong,
+.calorie-dashboard-head strong,
+.review-overview strong,
+.home-signal strong,
+.body-summary strong,
+.completion-dial span {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-progress) !important;
+  font-weight: 400 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -.025em !important;
+}
+
+/* Explanatory/supporting copy inside panels and empty states. */
+.setting-row small,
+.theme-family-header small,
+.editor-field small,
+.habit-note,
+.body-empty span,
+.focus-empty span,
+.archive-empty p,
+.terminal-note,
+.schedule-note,
+.calorie-meal-card p,
+.calorie-activity-card p,
+.workout-card p,
+.project-card p,
+.output-card p,
+.skill-card p {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-explain) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: .025em !important;
+}
+
+/* Terminal metadata remains one consistent small size. */
+.eyebrow,
+.heading-code,
+.panel-header,
+.habit-group-label,
+.habit-group-empty,
+.calorie-column-label,
+.archive-select-trigger,
+.archive-select-menu button,
+.book-viewer-meta {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-meta) !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+  letter-spacing: .075em !important;
+}
+
+/* Journal fields are identical in typography and interaction. */
+#journal-body,
+#future-note {
+  width: 100%;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  line-height: 1.55 !important;
+  letter-spacing: .005em !important;
+}
+
+.field-label-row {
+  min-height: 24px;
+}
+
+/* Today's reminder stays visible under the books without taking over the screen. */
+.today-reminder-banner {
+  gap: 4px !important;
+  margin: 0 0 7px !important;
+}
+
+.today-reminder-card {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px !important;
+  min-height: 42px !important;
+  padding: 7px 9px !important;
+  border: 1px solid rgba(var(--accent-rgb), .32) !important;
+  background: linear-gradient(100deg, rgba(var(--accent-rgb), .065), transparent 64%), #050505 !important;
+  box-shadow: none !important;
+}
+
+.today-reminder-card::after {
+  display: none !important;
+}
+
+.today-reminder-card > span {
+  font-size: 5px !important;
+  letter-spacing: .075em !important;
+  white-space: nowrap;
+}
+
+.today-reminder-card > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 9px !important;
+  line-height: 1.3 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-reminder-card .terminal-action {
+  position: static !important;
+  min-width: 28px;
+}
+
+.reminder-upcoming {
+  display: none !important;
+}
+
+/* Every selected/focused highlight is a single even one-pixel border. */
+:where(
+  .config-tabs button,
+  .theme-options button,
+  .color-vividness-options button,
+  .gradient-strength-options button,
+  .startup-options button,
+  .tab-visibility-options button,
+  .body-frame-options button
+) {
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .config-tabs button.active,
+  .theme-options button.active,
+  .color-vividness-options button.active,
+  .gradient-strength-options button.active,
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .body-frame-options button.active
+) {
+  border: 1px solid rgba(var(--accent-rgb), .58) !important;
+  box-shadow: none !important;
+}
+
+:where(input, textarea):focus,
+:where(input, textarea):focus-visible,
+.reminder-form input:focus,
+.reminder-form input:focus-visible {
+  border: 1px solid rgba(var(--accent-rgb), .68) !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Both timer readouts use identical geometry and glyph metrics. */
+#focus-readout,
+#track-readout {
+  display: block !important;
+  width: 100% !important;
+  height: 88px !important;
+  min-height: 88px !important;
+  margin: 24px 0 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #e1dfdc !important;
+  font-family: var(--code-font) !important;
+  font-size: clamp(38px, 11.5vw, 60px) !important;
+  font-weight: 300 !important;
+  font-variant-numeric: tabular-nums;
+  line-height: 88px !important;
+  letter-spacing: -.065em !important;
+  text-align: center !important;
+  -webkit-text-fill-color: #e1dfdc;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Nutrition forms are allowed to fit their content; both columns match. */
+.calorie-entry-grid {
+  align-items: stretch !important;
+}
+
+.calorie-entry-column {
+  grid-template-rows: auto auto 1fr;
+  align-content: stretch !important;
+}
+
+.calorie-entry-column .body-form {
+  display: flex !important;
+  flex-direction: column;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 346px !important;
+  overflow: visible !important;
+}
+
+.calorie-entry-column .panel-header {
+  min-height: 34px !important;
+  padding-inline: 6px !important;
+  overflow: visible !important;
+}
+
+.calorie-entry-column .panel-header > span {
+  overflow: visible !important;
+  font-size: 5px !important;
+  line-height: 1.2 !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.calorie-entry-column .calorie-form-grid,
+.calorie-entry-column .body-form > label {
+  min-width: 0;
+}
+
+.calorie-entry-column .primary-button {
+  align-self: end;
+  margin-top: auto !important;
+}
+
+.reminder-form input,
+.calorie-entry-column input {
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  line-height: 1.5 !important;
+  letter-spacing: .005em !important;
+}
+
+@media (max-width: 560px) {
+  .calorie-entry-column .body-form {
+    min-height: 352px !important;
+  }
+
+  .calorie-entry-column .calorie-form-grid > label,
+  .calorie-entry-column .body-form > label {
+    padding: 7px 6px !important;
+  }
+
+  .calorie-entry-column input {
+    min-height: 32px !important;
+    font-size: var(--type-input) !important;
+  }
+}
+
 .habit-name {
   font-size: 12px !important;
   line-height: 1.35 !important;
@@ -18104,5 +18427,1325 @@ button:focus-visible {
   .primary-button.action-confirmed,
   .ghost-button.action-confirmed {
     animation-duration: .01ms !important;
+  }
+}
+
+/* ===== v71: exact paired inputs, clean config selection, black startup, release notice ===== */
+
+html,
+body {
+  background-color: #000 !important;
+}
+
+.splash {
+  background:
+    radial-gradient(circle at 50% 47%, rgba(var(--accent-rgb), .055), transparent 31%),
+    #000 !important;
+  contain: paint;
+}
+
+#splash .logo-intro {
+  visibility: visible;
+}
+
+/* Both nutrition panels use the same four-track structure. */
+.calorie-entry-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start !important;
+  gap: 6px !important;
+}
+
+.calorie-entry-column {
+  grid-template-rows: auto auto 1fr !important;
+  gap: 6px !important;
+}
+
+.calorie-entry-column .body-form {
+  display: grid !important;
+  width: 100% !important;
+  height: 352px !important;
+  min-height: 352px !important;
+  max-height: 352px !important;
+  grid-template-rows: 34px minmax(0, 1fr) auto 48px !important;
+  align-items: stretch !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+.calorie-entry-column .panel-header {
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 7px !important;
+  box-sizing: border-box;
+}
+
+.calorie-entry-column .calorie-form-grid {
+  display: grid !important;
+  min-height: 0 !important;
+  align-content: start !important;
+  grid-auto-rows: min-content !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.calorie-entry-column .calorie-form-grid > label,
+.calorie-entry-column .body-form > label {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 7px !important;
+  box-sizing: border-box;
+}
+
+.calorie-entry-column .primary-button {
+  align-self: center !important;
+  justify-self: stretch !important;
+  width: auto !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  margin: 6px !important;
+  padding: 0 5px !important;
+  box-sizing: border-box;
+}
+
+/* Override the old white inset highlight with one even signal border. */
+.segmented-control.config-tabs > button,
+.segmented-control.config-tabs > button.active {
+  box-shadow: none !important;
+}
+
+.segmented-control.config-tabs > button.active {
+  border: 1px solid rgba(var(--accent-rgb), .58) !important;
+  background: rgba(var(--accent-rgb), .105) !important;
+  color: var(--accent-strong) !important;
+}
+
+/* One-time release notice, shown after the opening animation. */
+.release-dialog {
+  width: min(390px, calc(100vw - 28px));
+  max-width: 390px;
+  max-height: min(720px, calc(100dvh - 32px));
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: #e7e5e1;
+  opacity: 0;
+  transform: translateY(8px) scale(.985);
+  transition: opacity .24s ease, transform .32s cubic-bezier(.2,.78,.2,1);
+}
+
+.release-dialog.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.release-dialog.closing {
+  opacity: 0;
+  transform: translateY(5px) scale(.99);
+}
+
+.release-dialog::backdrop {
+  background: rgba(0, 0, 0, .82);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.release-dialog-shell {
+  position: relative;
+  display: grid;
+  gap: 13px;
+  max-height: min(720px, calc(100dvh - 32px));
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid rgba(var(--accent-rgb), .46);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), .11), transparent 38%),
+    linear-gradient(180deg, #0b0b0c, #050505 72%);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, .72),
+    inset 0 0 0 1px rgba(255,255,255,.025);
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.release-dialog-shell::before {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  left: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .82), transparent);
+  content: "";
+}
+
+.release-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(var(--accent-rgb), .22);
+}
+
+.release-dialog h2 {
+  margin: 4px 0 0;
+  color: #f0eeea;
+  font-family: var(--premium-font);
+  font-size: clamp(27px, 8.2vw, 36px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -.025em;
+}
+
+.release-version {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border: 1px solid rgba(var(--accent-rgb), .42);
+  background: rgba(var(--accent-rgb), .09);
+  color: var(--accent-strong);
+  font-family: var(--code-font);
+  font-size: 6px;
+  letter-spacing: .1em;
+}
+
+.release-intro {
+  margin: 0;
+  color: #8f8b93;
+  font-family: var(--code-font);
+  font-size: var(--type-explain);
+  line-height: 1.55;
+  letter-spacing: .025em;
+}
+
+.release-changes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-changes li {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid rgba(var(--accent-rgb), .14);
+  background: rgba(0, 0, 0, .28);
+}
+
+.release-changes li > span {
+  color: var(--accent-strong);
+  font-family: var(--code-font);
+  font-size: 7px;
+  line-height: 1.35;
+}
+
+.release-changes li div {
+  display: grid;
+  gap: 4px;
+}
+
+.release-changes strong,
+.release-changes small,
+.release-dialog-footer > span {
+  font-family: var(--code-font);
+}
+
+.release-changes strong {
+  color: #dedbd7;
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: .075em;
+}
+
+.release-changes small {
+  color: #817d85;
+  font-size: 6px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: .02em;
+}
+
+.release-dialog-footer {
+  display: grid;
+  gap: 9px;
+  padding-top: 3px;
+}
+
+.release-dialog-footer > span {
+  color: #605d64;
+  font-size: 5px;
+  letter-spacing: .09em;
+  text-align: center;
+}
+
+.release-dialog .primary-button {
+  min-height: 42px;
+  margin: 0;
+}
+
+@media (max-width: 390px) {
+  .calorie-entry-grid {
+    gap: 5px !important;
+  }
+
+  .calorie-entry-column .body-form {
+    height: 350px !important;
+    min-height: 350px !important;
+    max-height: 350px !important;
+  }
+
+  .calorie-entry-column .panel-header {
+    padding-inline: 5px !important;
+  }
+
+  .calorie-entry-column .calorie-form-grid > label,
+  .calorie-entry-column .body-form > label {
+    padding: 6px 5px !important;
+  }
+
+  .calorie-entry-column .primary-button {
+    margin-inline: 5px !important;
+  }
+
+  .release-dialog-shell {
+    gap: 11px;
+    padding: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .release-dialog {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ===== v72: coherent field geometry, safe compact notes, and deliberate config actions ===== */
+
+/* All labels use the same breathing room as the Journal fields. */
+:where(.journal-form, .body-form, .focus-form) label > span:not(.field-label-row),
+.field-label-row,
+.focus-log-grid label > span {
+  margin-bottom: 8px !important;
+}
+
+/* Three summary inputs should read as one equal row, not two plus a half-box. */
+.focus-log-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  padding: 14px 14px 0 !important;
+}
+
+.focus-log-grid > label {
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.focus-log-grid :where(input, select),
+.focus-form > label > :where(input, select) {
+  min-height: 46px !important;
+}
+
+.focus-log-grid .archive-select-trigger {
+  min-height: 46px !important;
+  height: 46px !important;
+}
+
+/* Nutrition uses four aligned tracks: header, three input slots, note, action. */
+.calorie-entry-grid {
+  gap: 8px !important;
+}
+
+.calorie-entry-column .body-form {
+  height: 386px !important;
+  min-height: 386px !important;
+  max-height: 386px !important;
+  grid-template-rows: 40px 210px 72px 62px !important;
+  overflow: hidden !important;
+}
+
+.calorie-entry-column .panel-header {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 9px !important;
+}
+
+.calorie-entry-column .panel-header > span:first-child {
+  font-size: 7px !important;
+  letter-spacing: .07em !important;
+}
+
+.calorie-entry-column .panel-header > span:last-child {
+  font-size: 5px !important;
+}
+
+.calorie-entry-column .calorie-form-grid {
+  display: grid !important;
+  grid-template-rows: repeat(3, 70px) !important;
+  grid-auto-rows: 70px !important;
+  align-content: start !important;
+  overflow: hidden !important;
+}
+
+#calorie-activity-form .calorie-form-grid::after {
+  display: block;
+  min-height: 70px;
+  content: "";
+}
+
+.calorie-entry-column .calorie-form-grid > label,
+.calorie-entry-column .body-form > label {
+  display: block !important;
+  height: 100% !important;
+  padding: 8px !important;
+  overflow: hidden !important;
+}
+
+.calorie-entry-column label > span {
+  display: block !important;
+  margin-bottom: 8px !important;
+}
+
+.calorie-entry-column input {
+  width: 100% !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  padding: 7px 9px !important;
+  box-sizing: border-box;
+}
+
+.calorie-entry-column .primary-button {
+  width: auto !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 8px !important;
+}
+
+/* Compact saved notes cannot push through their cards, even with unbroken text. */
+:where(
+  .habit-note,
+  .schedule-note,
+  .today-reminder-card > strong,
+  .reminder-chip > strong,
+  .schedule-reminder > strong,
+  .calorie-meal-card p,
+  .calorie-activity-card p,
+  .metric-card p,
+  .output-card > small,
+  .skill-state small,
+  .book-checklist em,
+  .book-body p,
+  .book-focus small
+) {
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.habit-note,
+.schedule-note,
+.today-reminder-card > strong,
+.calorie-meal-card p,
+.calorie-activity-card p {
+  display: -webkit-box !important;
+  white-space: normal !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.metric-card p,
+.output-card > small,
+.skill-state small {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.calorie-meal-card,
+.calorie-activity-card {
+  overflow: hidden;
+}
+
+.calorie-meal-card p,
+.calorie-activity-card p {
+  min-height: 0;
+  max-height: 3em;
+}
+
+:where(
+  .project-card p,
+  .output-card p,
+  .workout-card p,
+  .book-journal p
+) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* The brighter top edge is the shared language for selected segmented tabs. */
+:where(
+  .segmented-control,
+  .archive-tabs,
+  .body-tabs,
+  .focus-tabs,
+  .config-tabs
+) > button.active {
+  box-shadow: inset 0 1px rgba(235, 234, 228, .76) !important;
+}
+
+.segmented-control.config-tabs > button.active {
+  box-shadow: inset 0 1px rgba(235, 234, 228, .76) !important;
+}
+
+/* Destructive confirmation follows the same modal language as release notices. */
+.clear-data-dialog {
+  width: min(390px, calc(100vw - 28px));
+  max-width: 390px;
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: #e7e5e1;
+  opacity: 0;
+  transform: translateY(7px) scale(.985);
+  transition: opacity .22s ease, transform .3s cubic-bezier(.2,.78,.2,1);
+}
+
+.clear-data-dialog.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.clear-data-dialog.closing {
+  opacity: 0;
+  transform: translateY(4px) scale(.99);
+}
+
+.clear-data-dialog::backdrop {
+  background: rgba(0, 0, 0, .86);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.clear-data-shell {
+  position: relative;
+  display: grid;
+  gap: 15px;
+  padding: 18px;
+  border: 1px solid rgba(184, 67, 67, .58);
+  background:
+    linear-gradient(145deg, rgba(156, 45, 45, .12), transparent 42%),
+    linear-gradient(180deg, #0c0909, #050505 72%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .78), inset 0 0 0 1px rgba(255,255,255,.025);
+}
+
+.clear-data-shell::before {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  left: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(220, 90, 90, .86), transparent);
+  content: "";
+}
+
+.clear-data-shell header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 13px;
+  border-bottom: 1px dashed rgba(184, 67, 67, .28);
+}
+
+.clear-data-shell h2 {
+  margin: 4px 0 0;
+  color: #f0eeea;
+  font-family: var(--premium-font);
+  font-size: clamp(27px, 8vw, 35px);
+  font-weight: 500;
+  line-height: 1.03;
+  letter-spacing: -.025em;
+}
+
+.clear-data-mark {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(205, 74, 74, .65);
+  color: #d56c6c;
+  font-family: var(--code-font);
+  font-size: 11px;
+}
+
+.clear-data-shell > p {
+  margin: 0;
+  color: #918b90;
+  font-family: var(--code-font);
+  font-size: 7px;
+  line-height: 1.65;
+}
+
+.clear-data-warning {
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+  border: 1px solid rgba(184, 67, 67, .24);
+  background: rgba(120, 30, 30, .08);
+}
+
+.clear-data-warning span,
+.clear-data-warning strong {
+  font-family: var(--code-font);
+}
+
+.clear-data-warning span {
+  color: #d06d6d;
+  font-size: 6px;
+  letter-spacing: .1em;
+}
+
+.clear-data-warning strong {
+  color: #aaa3a6;
+  font-size: 7px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.clear-data-actions {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 8px;
+}
+
+.clear-data-actions button {
+  min-height: 42px;
+}
+
+@media (max-width: 640px) {
+  .focus-log-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .calorie-entry-grid {
+    gap: 6px !important;
+  }
+
+  .calorie-entry-column .body-form {
+    height: 378px !important;
+    min-height: 378px !important;
+    max-height: 378px !important;
+    grid-template-rows: 38px 204px 70px 64px !important;
+  }
+
+  .calorie-entry-column .panel-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding-inline: 6px !important;
+  }
+
+  .calorie-entry-column .calorie-form-grid {
+    grid-template-rows: repeat(3, 68px) !important;
+    grid-auto-rows: 68px !important;
+  }
+
+  #calorie-activity-form .calorie-form-grid::after {
+    min-height: 68px;
+  }
+
+  .calorie-entry-column .calorie-form-grid > label,
+  .calorie-entry-column .body-form > label {
+    padding: 7px 6px !important;
+  }
+
+  .calorie-entry-column input {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding-inline: 7px !important;
+  }
+
+  .calorie-entry-column .primary-button {
+    height: 44px !important;
+    margin: 9px 6px !important;
+  }
+
+  .clear-data-shell {
+    gap: 13px;
+    padding: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clear-data-dialog {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ===== v73: calmer energy type, color-linked Library, continuous book fill ===== */
+
+/* Nutrition labels and values now read as one restrained hierarchy. */
+.calorie-entry-column .panel-header {
+  color: rgba(var(--accent-rgb), .88) !important;
+}
+
+.calorie-entry-column .panel-header > span:first-child {
+  color: #c9c6c2 !important;
+  font-family: var(--code-font) !important;
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: .085em !important;
+}
+
+.calorie-entry-column .panel-header > span:last-child {
+  color: rgba(var(--accent-rgb), .72) !important;
+  font-family: var(--code-font) !important;
+  font-size: 5px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: .095em !important;
+}
+
+.calorie-entry-column label > span {
+  color: #8b878d !important;
+  font-family: var(--code-font) !important;
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  letter-spacing: .07em !important;
+}
+
+.calorie-entry-column input {
+  color: #d1ced1 !important;
+  font-family: var(--code-font) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+  letter-spacing: .005em !important;
+  -webkit-text-fill-color: #d1ced1;
+}
+
+.calorie-entry-column input::placeholder {
+  color: #5f5c63 !important;
+  opacity: 1 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: .005em !important;
+}
+
+.calorie-entry-column .primary-button {
+  font-family: var(--code-font) !important;
+  font-size: 7px !important;
+  font-weight: 600 !important;
+  letter-spacing: .09em !important;
+}
+
+/* The Library inherits the chosen signal without becoming a neon room. */
+#library-screen {
+  background:
+    radial-gradient(ellipse 78% 62% at 50% 48%, rgba(var(--accent-rgb), .085), transparent 68%),
+    linear-gradient(180deg, rgba(var(--theme-surface-rgb), .16), transparent 48%),
+    #020202 !important;
+}
+
+#library-screen .library-stage {
+  filter: saturate(var(--theme-saturation, 1));
+}
+
+#library-screen .library-chamber {
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(var(--accent-rgb), .07), transparent 48%),
+    rgba(var(--theme-surface-rgb), .045) !important;
+}
+
+#library-screen .library-case {
+  border-color: rgba(var(--accent-rgb), .3) !important;
+  background:
+    linear-gradient(90deg, rgba(var(--accent-rgb), .035), transparent 18% 82%, rgba(var(--accent-rgb), .025)),
+    #050505 !important;
+  box-shadow:
+    inset 0 0 24px rgba(var(--accent-rgb), .035),
+    inset 0 0 36px rgba(0,0,0,.72) !important;
+}
+
+#library-screen .library-shelf-solid {
+  border-color: rgba(var(--accent-rgb), .34) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), .17), rgba(var(--accent-rgb), .045) 34%, #050505 36%) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,.7), inset 0 1px rgba(var(--accent-rgb), .28) !important;
+}
+
+#library-screen :where(.library-case-post, .library-case-cap) {
+  border-color: rgba(var(--accent-rgb), .28) !important;
+  background:
+    linear-gradient(90deg, rgba(var(--accent-rgb), .12), #080808 38% 68%, rgba(var(--accent-rgb), .045)) !important;
+}
+
+#library-screen .library-book .library-book-spine {
+  border-color: rgba(var(--accent-rgb), .38) !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.13), transparent 28% 72%, rgba(0,0,0,.56)),
+    linear-gradient(180deg, rgba(var(--accent-rgb), .16), rgba(var(--accent-rgb), .055)),
+    #090909 !important;
+  box-shadow:
+    inset 1px 0 rgba(var(--accent-rgb), .19),
+    inset -1px 0 rgba(0,0,0,.64),
+    0 0 6px rgba(var(--accent-rgb), .045) !important;
+}
+
+#library-screen .library-volume.today-book .library-book-spine {
+  border-color: rgba(var(--accent-rgb), .8) !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.18), transparent 28% 72%, rgba(0,0,0,.48)),
+    linear-gradient(180deg, rgba(var(--accent-rgb), .42), rgba(var(--accent-rgb), .17)),
+    #090909 !important;
+  box-shadow:
+    inset 1px 0 rgba(255,255,255,.12),
+    inset -1px 0 rgba(0,0,0,.58),
+    0 0 9px rgba(var(--accent-rgb), .16) !important;
+}
+
+#library-screen .library-floor {
+  background:
+    linear-gradient(rgba(var(--accent-rgb), .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), .035) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0, rgba(var(--accent-rgb), .1), transparent 62%),
+    #030303 !important;
+}
+
+/* A real layer scales from the base; unlike a gradient stop, it interpolates continuously. */
+.memory-shelf .mini-book-upright {
+  position: relative !important;
+  isolation: isolate;
+  overflow: hidden !important;
+  opacity: .54;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.11), transparent 34% 72%, rgba(0,0,0,.58)),
+    #0b0a0c !important;
+  transition:
+    opacity 1.05s ease,
+    border-color 1.05s ease,
+    box-shadow 1.15s ease !important;
+}
+
+.memory-shelf .mini-book-upright::after {
+  position: absolute !important;
+  z-index: 0;
+  inset: 0 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  border: 0 !important;
+  background:
+    linear-gradient(to top, rgba(var(--accent-rgb), .72), rgba(var(--accent-rgb), .34) 72%, rgba(var(--accent-rgb), .22)) !important;
+  content: "";
+  opacity: .92 !important;
+  transform: scaleY(var(--mini-progress, 0)) !important;
+  transform-origin: center bottom !important;
+  transition: transform 1.4s cubic-bezier(.18,.72,.16,1) !important;
+  will-change: transform;
+}
+
+.memory-shelf .mini-book-upright::before {
+  z-index: 2;
+}
+
+.memory-shelf .mini-book-upright.has-entry {
+  opacity: .82;
+}
+
+.memory-shelf .mini-book-upright.completed {
+  opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .calorie-entry-column label > span {
+    font-size: 6px !important;
+  }
+
+  .calorie-entry-column input,
+  .calorie-entry-column input::placeholder {
+    font-size: 11px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memory-shelf .mini-book-upright::after {
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ===== v74: seamless overscroll, unified highlights, preboot black, depth polish ===== */
+
+html.prebooting,
+html.prebooting body {
+  background: #000 !important;
+}
+
+html.prebooting::before {
+  position: fixed;
+  z-index: 2147483646;
+  inset: 0;
+  display: block;
+  background: #000;
+  content: "";
+  pointer-events: none;
+}
+
+html,
+body {
+  background-color: #020202 !important;
+}
+
+body {
+  background:
+    linear-gradient(rgba(var(--accent-rgb), calc(var(--gradient-grid, .009) * .82)) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-rgb), calc(var(--gradient-grid, .009) * .82)) 1px, transparent 1px),
+    #020202 !important;
+  background-attachment: fixed !important;
+  background-size: 28px 28px, 28px 28px, auto !important;
+}
+
+body::after {
+  position: fixed !important;
+  z-index: 0 !important;
+  top: -72vh !important;
+  right: -28vw !important;
+  left: -28vw !important;
+  height: 178vh !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(ellipse 82% 58% at 50% 34%, rgba(var(--accent-rgb), calc(var(--gradient-glow, .065) * 1.05)), rgba(var(--accent-rgb), calc(var(--gradient-wash, .025) * .55)) 42%, transparent 76%),
+    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), calc(var(--gradient-wash, .025) * .86)), rgba(2, 2, 2, 0) 70%) !important;
+  content: "" !important;
+  filter: saturate(calc(var(--theme-saturation, 1) * 1.02));
+  transform: translateZ(0);
+}
+
+.overscroll-glow {
+  position: fixed !important;
+  z-index: 0 !important;
+  top: -64vh !important;
+  right: -24vw !important;
+  left: -24vw !important;
+  display: block !important;
+  height: 146vh !important;
+  pointer-events: none !important;
+  opacity: calc(.34 + var(--overscroll-light, 0) * .22) !important;
+  background:
+    radial-gradient(ellipse 76% 52% at 50% 36%, rgba(var(--accent-rgb), calc(var(--gradient-glow, .065) * .82)), transparent 76%),
+    linear-gradient(to bottom, rgba(var(--theme-surface-rgb), calc(var(--gradient-wash, .025) * .62)), transparent 74%) !important;
+  mix-blend-mode: screen;
+  transform: translateZ(0);
+}
+
+.app-shell,
+.screen-stage,
+.screen.active {
+  background: transparent !important;
+}
+
+.app-shell {
+  box-shadow:
+    inset 1px 0 rgba(var(--accent-rgb), .06),
+    inset -1px 0 rgba(var(--accent-rgb), .035),
+    0 0 80px rgba(0, 0, 0, .28) !important;
+}
+
+.topbar {
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, .94), rgba(0, 0, 0, .82)),
+    rgba(0, 0, 0, .86) !important;
+  border-bottom-color: rgba(var(--accent-rgb), .26) !important;
+  box-shadow:
+    0 18px 34px rgba(0, 0, 0, .28),
+    inset 0 -1px rgba(var(--accent-rgb), .13) !important;
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+}
+
+:where(.screen-heading, .panel, .home-memory, .metric-card, .habit-editor-shell, .release-dialog-shell, .clear-data-shell, .calorie-entry-column, .book-viewer-shell) {
+  filter: drop-shadow(0 14px 32px rgba(0, 0, 0, .18));
+}
+
+:where(.panel, .home-memory, .metric-card, .habit-editor-shell, .release-dialog-shell, .clear-data-shell, .calorie-entry-column, .book-viewer-shell) {
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), .034), rgba(255, 255, 255, .008) 42%, rgba(0, 0, 0, .12)),
+    rgba(5, 5, 5, .76) !important;
+  border-color: rgba(var(--accent-rgb), .18) !important;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .035),
+    inset 0 -1px rgba(0, 0, 0, .66),
+    0 18px 46px rgba(0, 0, 0, .24) !important;
+}
+
+:where(.panel + .panel, .home-memory + .panel, .summary-grid + .panel, .calorie-track + .calorie-entry-grid, .calorie-entry-grid + .calorie-history-grid) {
+  margin-top: clamp(10px, 2.8vw, 16px) !important;
+}
+
+:where(
+  .segmented-control button,
+  .archive-tabs > button,
+  .body-tabs > button,
+  .focus-tabs > button,
+  .config-tabs > button,
+  .theme-options button,
+  .color-vividness-options button,
+  .gradient-strength-options button,
+  .startup-options button,
+  .tab-visibility-options button,
+  .area-layout-options button,
+  .home-group-control button,
+  .summary-edit-control button,
+  .habit-type-options label > span,
+  .day-options span
+) {
+  position: relative !important;
+  overflow: hidden !important;
+  border-color: rgba(var(--accent-rgb), .16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .018), rgba(0, 0, 0, .025)),
+    rgba(7, 7, 7, .86) !important;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .028),
+    inset 0 -1px rgba(0, 0, 0, .54),
+    0 8px 20px rgba(0, 0, 0, .12) !important;
+  transition:
+    border-color .28s ease,
+    background .28s ease,
+    color .28s ease,
+    box-shadow .32s ease,
+    transform .22s cubic-bezier(.2,.72,.2,1) !important;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) {
+  border-color: rgba(var(--accent-rgb), .52) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), .145), rgba(var(--accent-rgb), .056) 52%, rgba(0, 0, 0, .08)),
+    rgba(8, 8, 8, .9) !important;
+  color: var(--accent-strong) !important;
+  box-shadow:
+    inset 0 1px rgba(var(--accent-rgb), .48),
+    inset 0 -1px rgba(var(--accent-rgb), .16),
+    0 12px 28px rgba(0, 0, 0, .22),
+    0 0 18px rgba(var(--accent-rgb), .04) !important;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+)::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .72), transparent);
+  content: "";
+  pointer-events: none;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.habit-type-options label > span {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.habit-type-options input:checked + span strong,
+.day-options input:checked + span {
+  color: var(--accent-strong) !important;
+}
+
+.habit-type-options input:checked + span small {
+  color: rgba(var(--accent-rgb), .66) !important;
+}
+
+:where(
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"]
+) {
+  outline: 0 !important;
+}
+
+@media (max-width: 560px) {
+  body::after {
+    top: -82vh !important;
+    right: -36vw !important;
+    left: -36vw !important;
+    height: 188vh !important;
+  }
+
+  .overscroll-glow {
+    top: -74vh !important;
+    right: -32vw !important;
+    left: -32vw !important;
+    height: 158vh !important;
+  }
+
+  :where(.panel + .panel, .home-memory + .panel, .summary-grid + .panel, .calorie-track + .calorie-entry-grid, .calorie-entry-grid + .calorie-history-grid) {
+    margin-top: 10px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.prebooting::before {
+    transition: none !important;
+  }
+}
+
+/* ===== v76: final archive seal, data snapshot, calculation hardening ===== */
+
+.day-archive-dialog {
+  width: min(410px, calc(100vw - 28px));
+  max-width: 410px;
+  margin: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: #e8e5df;
+  opacity: 0;
+  transform: translateY(7px) scale(.985);
+  transition: opacity .22s ease, transform .3s cubic-bezier(.2,.78,.2,1);
+}
+
+.day-archive-dialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.day-archive-dialog::backdrop {
+  background: rgba(0, 0, 0, .84);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.day-archive-shell {
+  position: relative;
+  display: grid;
+  gap: 15px;
+  padding: 18px;
+  border: 1px solid rgba(var(--accent-rgb), .5);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), .14), transparent 44%),
+    linear-gradient(180deg, #0b0b0b, #050505 72%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .78), inset 0 0 0 1px rgba(255,255,255,.025);
+}
+
+.day-archive-shell::before {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  left: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .86), transparent);
+  content: "";
+}
+
+.day-archive-shell header {
+  display: block;
+  padding-bottom: 13px;
+  border-bottom: 1px dashed rgba(var(--accent-rgb), .3);
+}
+
+.day-archive-shell h2 {
+  margin: 4px 0 0;
+  color: #f0eeea;
+  font-family: var(--premium-font);
+  font-size: clamp(27px, 8vw, 35px);
+  font-weight: 500;
+  line-height: 1.03;
+  letter-spacing: -.025em;
+}
+
+.day-archive-shell > p {
+  margin: 0;
+  color: #918b90;
+  font-family: var(--code-font);
+  font-size: 7px;
+  line-height: 1.65;
+}
+
+.day-archive-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.day-archive-summary span {
+  display: grid;
+  gap: 4px;
+  min-height: 68px;
+  align-content: center;
+  padding: 9px 7px;
+  border: 1px solid rgba(var(--accent-rgb), .18);
+  background: rgba(var(--accent-rgb), .045);
+}
+
+.day-archive-summary small,
+.day-archive-summary em {
+  overflow: hidden;
+  color: #817b84;
+  font-family: var(--code-font);
+  font-size: 5px;
+  font-style: normal;
+  line-height: 1.35;
+  letter-spacing: .08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-archive-summary strong {
+  color: #eeeae4;
+  font-family: var(--code-font);
+  font-size: 17px;
+  font-weight: 450;
+  line-height: 1;
+}
+
+.day-archive-actions {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 8px;
+}
+
+.archive-book.sealed-book {
+  border-color: rgba(var(--accent-rgb), .8) !important;
+  box-shadow:
+    inset 5px 0 rgba(255,255,255,.04),
+    inset 0 1px rgba(var(--accent-rgb), .38),
+    0 0 18px rgba(var(--accent-rgb), .14),
+    4px 0 12px rgba(0,0,0,.5) !important;
+}
+
+.archive-book.auto-book {
+  border-style: solid;
+}
+
+.book-archive-mode {
+  position: absolute !important;
+  top: 50% !important;
+  right: 3px !important;
+  left: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  padding: 2px 3px;
+  border: 1px solid rgba(var(--accent-rgb), .22);
+  background: rgba(0,0,0,.52);
+  color: var(--accent-strong);
+  font-family: var(--code-font);
+  font-size: 4px !important;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-align: center;
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: center;
+}
+
+.book-page-marks i.sealed {
+  background: var(--accent-strong, #d8cfba) !important;
+  box-shadow: 0 0 7px rgba(var(--accent-rgb), .34);
+}
+
+.book-page-marks i.auto {
+  background: rgba(var(--accent-rgb), .52) !important;
+}
+
+@media (max-width: 560px) {
+  .topbar-actions {
+    gap: 2px !important;
+  }
+
+  .topbar-access {
+    padding-inline: 4px !important;
+    gap: 3px !important;
+    font-size: 5px !important;
+  }
+
+  .topbar-icon {
+    font-size: 5px !important;
+  }
+
+  .day-archive-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

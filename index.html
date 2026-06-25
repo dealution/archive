@@ -1,12 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="prebooting" style="background:#000">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#020202" />
+    <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Archive: a focused habit, journal, and time tracker." />
-    <style>html,body{min-height:100%;margin:0;background:#020202!important;color-scheme:dark}body{visibility:hidden}body.boot-ready{visibility:visible}</style>
+    <style>
+      :root,html,body{min-height:100%;margin:0;background:#000!important;color-scheme:dark}
+      html.prebooting::before{content:"";position:fixed;z-index:2147483646;inset:0;background:#000;pointer-events:none}
+      body{visibility:hidden}
+      body.boot-ready{visibility:visible}
+      #splash{position:fixed;z-index:2147483647;inset:0;display:grid;place-items:center;background:#000}
+      #splash .logo-intro{visibility:hidden}
+    </style>
     <script>
       (() => {
         const themes = {
@@ -42,14 +52,14 @@
         } catch {}
       })();
     </script>
-    <link rel="manifest" href="./manifest.webmanifest?v=69" />
+    <link rel="manifest" href="./manifest.webmanifest?v=78" />
     <link rel="preload" href="./app-logo.png" as="image" />
     <link rel="icon" href="./icon-192.png?v=26" type="image/png" />
     <link rel="apple-touch-icon" href="./icon-192.png?v=26" />
-    <link rel="stylesheet" href="./styles.css?v=69" />
+    <link rel="stylesheet" href="./styles.css?v=78" />
     <title>Archive</title>
   </head>
-  <body class="boot-ready">
+  <body class="boot-ready" style="background:#000">
     <div class="noise" aria-hidden="true"></div>
 
     <div class="splash" id="splash" aria-hidden="true">
@@ -75,6 +85,7 @@
           <span id="top-screen-name">CHECKLIST</span>
         </button>
         <div class="topbar-actions">
+          <button class="topbar-access archive-day-access" id="archive-day-open" type="button" aria-label="Archive today"><span class="topbar-icon">[A]</span><span>ARCHIVE</span></button>
           <button class="topbar-access timer-access" data-screen="timer" aria-label="Open timer"><span class="topbar-icon">[T]</span><span>TIMER</span></button>
           <button class="topbar-access config-access" data-screen="settings" aria-label="Open configuration"><span class="topbar-icon">[C]</span><span>CONFIG</span></button>
         </div>
@@ -127,11 +138,10 @@
             <section class="panel reminder-composer">
               <div class="panel-header"><span>REMINDERS</span><span>SPECIFIC DAY</span></div>
               <form class="reminder-form" id="reminder-form">
-                <input id="reminder-text" maxlength="140" autocomplete="off" placeholder="What needs your attention?" aria-label="Reminder text" required />
+                <input id="reminder-text" maxlength="80" autocomplete="off" placeholder="What needs your attention?" aria-label="Reminder text" required />
                 <input id="reminder-date" type="date" aria-label="Reminder date" required />
                 <button class="primary-button" id="reminder-save" type="submit">SET REMINDER</button>
               </form>
-              <div class="reminder-upcoming" id="reminder-upcoming"></div>
             </section>
 
             <nav class="home-launchpad" aria-label="App areas">
@@ -155,12 +165,12 @@
           <form class="panel journal-form" id="journal-form">
             <div class="panel-header"><span>NEW_ENTRY</span><span id="journal-date-label"></span></div>
             <label>
-              <span>TODAY'S NOTES</span>
+              <span id="journal-body-label">TODAY'S NOTES</span>
               <textarea id="journal-body" rows="8"></textarea>
             </label>
             <label>
-              <span class="field-label-row"><span>MESSAGE FOR TOMORROW</span><button class="terminal-action future-note-clear" id="future-note-clear" type="button">CLEAR</button></span>
-              <textarea id="future-note" rows="3" maxlength="360"></textarea>
+              <span class="field-label-row"><span id="future-note-label">MESSAGE FOR TOMORROW</span><button class="terminal-action future-note-clear" id="future-note-clear" type="button">CLEAR</button></span>
+              <textarea id="future-note" rows="3" maxlength="80"></textarea>
             </label>
             <button class="primary-button" id="journal-save" type="submit">SAVE ENTRY</button>
           </form>
@@ -343,7 +353,7 @@
               </div>
               <label>
                 <span>NOTE</span>
-                <input id="body-note" maxlength="180" placeholder="Energy, recovery, context..." />
+                <input id="body-note" maxlength="120" placeholder="Energy, recovery, context..." />
               </label>
               <button class="primary-button" type="submit">SAVE CHECK-IN</button>
             </form>
@@ -359,7 +369,7 @@
                 <label><span>MAX WEIGHT // KG</span><input id="pr-weight" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0" /></label>
               </div>
               <datalist id="pr-movement-options"></datalist>
-              <label><span>NOTE</span><input id="pr-note" maxlength="180" placeholder="Form standard, load, range, context..." /></label>
+              <label><span>NOTE</span><input id="pr-note" maxlength="120" placeholder="Form standard, load, range, context..." /></label>
               <button class="primary-button" type="submit">LOG PR</button>
             </form>
             <div class="pr-board" id="pr-board"></div>
@@ -384,7 +394,7 @@
                     <label><span>CALORIES</span><input id="calorie-meal-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="650" required /></label>
                     <label><span>PROTEIN // G</span><input id="calorie-meal-protein" type="number" inputmode="decimal" min="0" step="1" placeholder="45" /></label>
                   </div>
-                  <label><span>NOTE</span><input id="calorie-meal-note" maxlength="180" placeholder="Food quality..." /></label>
+                  <label><span>NOTE</span><input id="calorie-meal-note" maxlength="72" placeholder="Food quality..." /></label>
                   <button class="primary-button" id="calorie-meal-save" type="submit">ADD MEAL</button>
                 </form>
                 <div class="calorie-column-label"><span>MEALS</span><small>DAILY INTAKE</small></div>
@@ -397,7 +407,7 @@
                     <label><span>ACTIVITY</span><input id="calorie-activity-name" maxlength="52" autocomplete="off" placeholder="Long walk" required /></label>
                     <label><span>CALORIES BURNED</span><input id="calorie-activity-kcal" type="number" inputmode="numeric" min="1" step="1" placeholder="320" required /></label>
                   </div>
-                  <label><span>NOTE</span><input id="calorie-activity-note" maxlength="180" placeholder="Duration, distance..." /></label>
+                  <label><span>NOTE</span><input id="calorie-activity-note" maxlength="72" placeholder="Duration, distance..." /></label>
                   <button class="primary-button" id="calorie-activity-save" type="submit">ADD ACTIVITY</button>
                 </form>
                 <div class="calorie-column-label"><span>ACTIVITIES</span><small>EXTRA BURN</small></div>
@@ -469,7 +479,7 @@
                 <label><span>INCOME</span><input id="focus-log-income" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" /></label>
               </div>
               <label><span>FINISHED OUTPUT</span><textarea id="focus-log-output" rows="4" maxlength="700" placeholder="What concrete result did you produce?" required></textarea></label>
-              <label><span>NOTE</span><input id="focus-log-note" maxlength="180" placeholder="Decision, blocker, or next move..." /></label>
+              <label><span>NOTE</span><input id="focus-log-note" maxlength="120" placeholder="Decision, blocker, or next move..." /></label>
               <button class="primary-button" type="submit">ARCHIVE OUTPUT</button>
             </form>
             <div class="focus-log-list" id="focus-log-list"></div>
@@ -480,7 +490,7 @@
               <div class="panel-header"><span>SKILL.MAP</span><span>CAPABILITY</span></div>
               <label><span>SKILL</span><input id="skill-name" maxlength="64" autocomplete="off" placeholder="Product design" required /></label>
               <label><span>PROGRESS // 0-100</span><input id="skill-progress" type="number" inputmode="numeric" min="0" max="100" step="1" placeholder="40" /></label>
-              <label><span>LEARNING NOTE</span><input id="skill-note" maxlength="180" placeholder="What are you practicing next?" /></label>
+              <label><span>LEARNING NOTE</span><input id="skill-note" maxlength="120" placeholder="What are you practicing next?" /></label>
               <button class="primary-button" type="submit">ADD SKILL</button>
             </form>
             <div class="skill-list" id="skill-list"></div>
@@ -672,7 +682,7 @@
 
         <label class="editor-field">
           <span>DAILY NOTE / INSTRUCTIONS</span>
-          <textarea id="habit-editor-note" maxlength="280" rows="4" placeholder="Example: Push day // bench press, incline press, shoulder press."></textarea>
+          <textarea id="habit-editor-note" maxlength="120" rows="4" placeholder="Example: Push day // bench press, incline press, shoulder press."></textarea>
           <small>This appears beneath the habit on each scheduled day.</small>
         </label>
 
@@ -713,9 +723,67 @@
       </form>
     </dialog>
 
+    <dialog class="day-archive-dialog" id="day-archive-dialog" aria-labelledby="day-archive-title">
+      <div class="day-archive-shell">
+        <header>
+          <div>
+            <p class="eyebrow">ARCHIVE.DAY</p>
+            <h2 id="day-archive-title">Archive today?</h2>
+          </div>
+        </header>
+        <p id="day-archive-copy">This seals today into one archive book. If you add more today, the same book updates instead of duplicating.</p>
+        <div class="day-archive-summary" id="day-archive-summary"></div>
+        <div class="day-archive-actions">
+          <button class="ghost-button" id="day-archive-cancel" type="button">NOT NOW</button>
+          <button class="primary-button" id="day-archive-confirm" type="button">ARCHIVE TODAY</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="release-dialog" id="release-dialog" aria-labelledby="release-dialog-title">
+      <div class="release-dialog-shell">
+        <header>
+          <div>
+            <p class="eyebrow">SYSTEM.UPDATE // V76</p>
+            <h2 id="release-dialog-title">Archive seal online.</h2>
+          </div>
+          <span class="release-version">LATEST</span>
+        </header>
+        <p class="release-intro">A final archive-save and data integrity pass is now active on this device.</p>
+        <ul class="release-changes">
+          <li><span>01</span><div><strong>ARCHIVE DAY</strong><small>A new top-bar button seals today into Archive with a simple confirmation popup.</small></div></li>
+          <li><span>02</span><div><strong>NO DUPLICATES</strong><small>Manual archive updates the same day book; new same-day information is merged into that record.</small></div></li>
+          <li><span>03</span><div><strong>SNAPSHOT DEPTH</strong><small>Archived days now store copied timer logs and normalized nutrition data inside the day record.</small></div></li>
+          <li><span>04</span><div><strong>AUTO VS SEALED</strong><small>Archive books now visually separate automatic captures from manually sealed days.</small></div></li>
+        </ul>
+        <div class="release-dialog-footer">
+          <span>2026.06.25 // LOCAL UPDATE</span>
+          <button class="primary-button" id="release-dialog-close" type="button">ENTER ARCHIVE</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="clear-data-dialog" id="clear-data-dialog" aria-labelledby="clear-data-title">
+      <div class="clear-data-shell">
+        <header>
+          <div>
+            <p class="eyebrow">LOCAL.DATA // DESTRUCTIVE ACTION</p>
+            <h2 id="clear-data-title">Clear this Archive?</h2>
+          </div>
+          <span class="clear-data-mark">!</span>
+        </header>
+        <p>This permanently removes the habits, reminders, journal entries, body records, timers, projects, and settings stored by this PWA on this device.</p>
+        <div class="clear-data-warning"><span>NO UNDO</span><strong>Export a private backup first if you may need this data again.</strong></div>
+        <div class="clear-data-actions">
+          <button class="ghost-button" id="clear-data-cancel" type="button">CANCEL</button>
+          <button class="danger-button" id="clear-data-confirm" type="button">CLEAR EVERYTHING</button>
+        </div>
+      </div>
+    </dialog>
+
     <div class="config-loading" id="config-loading" role="status" aria-live="polite">LOADING<span></span></div>
     <div class="overscroll-glow" aria-hidden="true"></div>
     <div class="toast" id="toast" role="status"></div>
-    <script src="./app.js?v=69"></script>
+    <script src="./app.js?v=78"></script>
   </body>
 </html>

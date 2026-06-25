@@ -5,6 +5,15 @@ const STATE_DB_STORE = "state";
 const STATE_DB_KEY = "current";
 const LEGACY_STORAGE_KEYS = ["project-life-state-v1", "archive-timer-runtime-v1"];
 const LEGACY_DATABASES = ["archive-durable-state"];
+const RELEASE_NOTICE_VERSION = 76;
+const RELEASE_NOTICE_KEY = `archive-release-seen-v${RELEASE_NOTICE_VERSION}`;
+const NOTE_LIMITS = Object.freeze({
+  reminder: 80,
+  future: 80,
+  habit: 120,
+  compact: 72,
+  standard: 120
+});
 const STARTUP_SNAPSHOT_DAYS = 120;
 const ARCHIVE_PAGE_SIZE = 52;
 const HISTORY_PAGE_SIZE = 60;
@@ -65,6 +74,7 @@ const dateKey = (date = new Date()) => {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+const limitedText = (value, limit) => String(value || "").trim().slice(0, limit);
 
 const initialState = {
   habits: DEFAULT_HABITS.map((name, index) => ({ id: `starter-${index}`, name, note: "", type: "commitment", days: [...EVERY_DAY], targetCount: 1 })),
@@ -240,7 +250,7 @@ function loadState() {
     loaded.reminders = Array.isArray(loaded.reminders)
       ? loaded.reminders.filter((reminder) => reminder?.date && reminder?.text).map((reminder, index) => ({
         id: String(reminder.id || `legacy-reminder-${index}`),
-        text: String(reminder.text).slice(0, 140),
+        text: String(reminder.text).slice(0, NOTE_LIMITS.reminder),
         date: String(reminder.date),
         createdAt: Number(reminder.createdAt) || Date.now()
       }))
@@ -457,9 +467,9 @@ function saveTimerRuntime() {
   }
 }
 
-function saveState() {
+function saveState({ configFeedback = false } = {}) {
   state.persistedAt = Date.now();
-  if (currentScreen === "settings") showConfigLoading();
+  if (configFeedback && currentScreen === "settings") showConfigLoading();
   if (!durableStorageReady) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -691,7 +701,7 @@ function isGeneratedDemoJournal(entry) {
   return (!body || demoBodies.has(body)) && (!futureNote || demoFutureNotes.has(futureNote));
 }
 
-function syncDayRecord(key = dateKey()) {
+function syncDayRecord(key = dateKey(), options = {}) {
   archiveWeekKeyCache = null;
   archiveSearchIndexCache.delete(key);
   const completed = new Set(state.completions[key] || []);
@@ -710,12 +720,18 @@ function syncDayRecord(key = dateKey()) {
   const hasActivity = hasCompletedCommitment || hasFailedRestraint || hasJournalContent(journal) || logs.length || body || bodyPrs.length || calories || focus.length;
 
   state.dayRecords = state.dayRecords || {};
-  if (!hasActivity) {
+  const previousRecord = state.dayRecords[key] || {};
+  const previousArchive = previousRecord.archive || {};
+  const manuallySealed = options.manual === true || previousArchive.status === "sealed";
+  const forceArchive = options.force === true || manuallySealed;
+  if (!hasActivity && !forceArchive) {
     delete state.dayRecords[key];
     if (currentScreen === "library") requestAnimationFrame(renderLibrary);
-    return;
+    return false;
   }
 
+  const capturedAt = new Date().toISOString();
+  const signalSummary = archiveDaySignalSummary(key);
   state.dayRecords[key] = {
     checklist: scheduledHabits.map((habit) => ({
       id: habit.id,
@@ -730,11 +746,122 @@ function syncDayRecord(key = dateKey()) {
     journal: journal ? { ...journal } : null,
     body: body ? { ...body } : null,
     bodyPrs: bodyPrs.map((entry) => ({ ...entry })),
-    calories: calories ? { ...calories } : null,
+    calories: calories ? normalizeCalorieEntry(calories) : null,
+    logs: logs.map((log) => ({ ...log })),
     focus: focus.map((log) => ({ ...log })),
-    updatedAt: new Date().toISOString()
+    archive: {
+      status: manuallySealed ? "sealed" : "auto",
+      firstCapturedAt: previousArchive.firstCapturedAt || capturedAt,
+      sealedAt: options.manual === true ? capturedAt : previousArchive.sealedAt || "",
+      updatedAt: capturedAt,
+      signalCount: signalSummary.total,
+      mode: options.manual === true ? "manual" : manuallySealed ? "sealed-update" : "auto"
+    },
+    updatedAt: capturedAt
   };
   if (currentScreen === "library") requestAnimationFrame(renderLibrary);
+  return true;
+}
+
+function archiveDaySignalSummary(key = dateKey()) {
+  const recordDate = new Date(`${key}T12:00:00`);
+  const completed = new Set(state.completions[key] || []);
+  const completionCounts = state.completionCounts?.[key] || {};
+  const restraintFailures = new Set(state.restraintFailures[key] || []);
+  const scheduledHabits = state.habits.filter((habit) => habitShowsOnDate(habit, recordDate));
+  const checkedHabits = scheduledHabits.filter((habit) => habitProgress(habit, completed, restraintFailures, completionCounts) > 0 || restraintFailures.has(habit.id)).length;
+  const journal = state.journal[key] || null;
+  const logs = state.timeLogs[key] || [];
+  const body = state.body.metrics.find((metric) => metric.date === key) || null;
+  const bodyPrs = allPrEntries().filter((entry) => entry.date === key);
+  const calories = state.body.calories?.find((entry) => entry.date === key) || null;
+  const normalizedCalories = calories ? normalizeCalorieEntry(calories) : null;
+  const focus = state.focus.logs.filter((log) => log.date === key);
+  const calorieTargetOnly = normalizedCalories && !normalizedCalories.meals.length && !normalizedCalories.activities.length && (normalizedCalories.targetKcal || normalizedCalories.maintenanceKcal) ? 1 : 0;
+  const calorieSignals = normalizedCalories ? normalizedCalories.meals.length + normalizedCalories.activities.length + calorieTargetOnly : 0;
+  const timeSeconds = logs.reduce((sum, log) => sum + Math.max(0, Number(log?.seconds) || 0), 0);
+  const total = checkedHabits
+    + (hasJournalContent(journal) ? 1 : 0)
+    + logs.length
+    + (body ? 1 : 0)
+    + bodyPrs.length
+    + calorieSignals
+    + focus.length;
+  return {
+    key,
+    checklist: checkedHabits,
+    scheduled: scheduledHabits.length,
+    journal: hasJournalContent(journal) ? 1 : 0,
+    logs: logs.length,
+    timeSeconds,
+    body: body ? 1 : 0,
+    prs: bodyPrs.length,
+    meals: normalizedCalories?.meals.length || 0,
+    activities: normalizedCalories?.activities.length || 0,
+    calories: calorieSignals,
+    focus: focus.length,
+    total
+  };
+}
+
+function archiveDaySummaryMarkup(summary) {
+  const cells = [
+    ["CHECKS", summary.checklist, `${summary.scheduled} scheduled`],
+    ["JOURNAL", summary.journal, summary.journal ? "entry saved" : "no entry"],
+    ["TIME", summary.logs, summary.timeSeconds ? formatTimer(summary.timeSeconds, true) : "no logs"],
+    ["BODY", summary.body + summary.prs, summary.prs ? `${summary.prs} prs` : summary.body ? "check-in" : "no check-in"],
+    ["KCAL", summary.calories, `${summary.meals} meals // ${summary.activities} activities`],
+    ["FOCUS", summary.focus, summary.focus === 1 ? "output" : "outputs"]
+  ];
+  return cells.map(([label, value, note]) => `
+    <span>
+      <small>${label}</small>
+      <strong>${value}</strong>
+      <em>${note}</em>
+    </span>
+  `).join("");
+}
+
+function openDayArchiveDialog() {
+  const dialog = document.querySelector("#day-archive-dialog");
+  const title = document.querySelector("#day-archive-title");
+  const copy = document.querySelector("#day-archive-copy");
+  const summaryBox = document.querySelector("#day-archive-summary");
+  if (!dialog || !summaryBox) return;
+  const today = dateKey();
+  const existing = state.dayRecords?.[today];
+  const summary = archiveDaySignalSummary(today);
+  title.textContent = existing?.archive?.status === "sealed" ? "Update today's archive?" : "Archive today?";
+  copy.textContent = summary.total
+    ? "This seals today into one archive book. If you add more today, the same book updates instead of duplicating."
+    : "No signal is recorded yet. You can still create an empty sealed day, or let Archive autosave once you add something.";
+  summaryBox.innerHTML = archiveDaySummaryMarkup(summary);
+  if (!dialog.open) dialog.showModal();
+  requestAnimationFrame(() => document.querySelector("#day-archive-confirm")?.focus({ preventScroll: true }));
+}
+
+function closeDayArchiveDialog() {
+  const dialog = document.querySelector("#day-archive-dialog");
+  if (dialog?.open) dialog.close();
+}
+
+function archiveTodayManually() {
+  const key = dateKey();
+  const existed = Boolean(state.dayRecords?.[key]);
+  const saved = syncDayRecord(key, { manual: true, force: true });
+  if (!saved) {
+    showToast("nothing archived");
+    return;
+  }
+  saveState();
+  closeDayArchiveDialog();
+  renderHomeArchive();
+  renderArchive();
+  renderLibrary();
+  if (currentArchiveTab === "reviews") renderWeeklyReviews();
+  const trigger = document.querySelector("#archive-day-open");
+  confirmControl(trigger, existed ? "UPDATED" : "ARCHIVED");
+  showToast(existed ? "today archive updated" : "today archived");
 }
 
 function habitShowsOnDate(habit, date = new Date()) {
@@ -929,6 +1056,42 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
+function releaseNoticeWasSeen() {
+  try {
+    return localStorage.getItem(RELEASE_NOTICE_KEY) === "seen";
+  } catch {
+    return false;
+  }
+}
+
+function markReleaseNoticeSeen() {
+  try {
+    localStorage.setItem(RELEASE_NOTICE_KEY, "seen");
+  } catch {
+    // The notice can still close when private storage is unavailable.
+  }
+}
+
+function showReleaseNotice() {
+  if (releaseNoticeWasSeen()) return;
+  const dialog = document.querySelector("#release-dialog");
+  if (!dialog || dialog.open) return;
+  dialog.showModal();
+  requestAnimationFrame(() => dialog.classList.add("visible"));
+}
+
+function closeReleaseNotice() {
+  const dialog = document.querySelector("#release-dialog");
+  if (!dialog?.open) return;
+  markReleaseNoticeSeen();
+  dialog.classList.remove("visible");
+  dialog.classList.add("closing");
+  setTimeout(() => {
+    dialog.close();
+    dialog.classList.remove("closing");
+  }, 240);
+}
+
 function showConfigLoading() {
   const indicator = document.querySelector("#config-loading");
   if (!indicator) return;
@@ -946,7 +1109,9 @@ function showConfigLoading() {
 function confirmControl(button, confirmation = "SAVED", duration = 760) {
   if (!button) return;
   const original = button.dataset.restoreLabel || button.textContent;
+  const originalHtml = button.dataset.restoreHtml || button.innerHTML;
   button.dataset.restoreLabel = original;
+  button.dataset.restoreHtml = originalHtml;
   button.blur();
   button.classList.remove("action-confirmed");
   void button.offsetWidth;
@@ -954,8 +1119,9 @@ function confirmControl(button, confirmation = "SAVED", duration = 760) {
   button.textContent = confirmation;
   setTimeout(() => {
     button.classList.remove("action-confirmed");
-    button.textContent = button.dataset.restoreLabel || original;
+    button.innerHTML = button.dataset.restoreHtml || originalHtml;
     delete button.dataset.restoreLabel;
+    delete button.dataset.restoreHtml;
     button.blur();
   }, duration);
 }
@@ -1343,7 +1509,7 @@ function openHabitEditor(name = "", id = null) {
 
 function saveHabitConfiguration() {
   const name = document.querySelector("#habit-editor-name").value.trim();
-  const note = document.querySelector("#habit-editor-note").value.trim();
+  const note = limitedText(document.querySelector("#habit-editor-note").value, NOTE_LIMITS.habit);
   const type = document.querySelector('input[name="habit-type"]:checked')?.value || "commitment";
   const targetCount = Math.min(99, Math.max(1, Number(document.querySelector("#habit-editor-target").value) || 1));
   const days = [...document.querySelectorAll('input[name="habit-day"]:checked')].map((input) => input.value);
@@ -1402,9 +1568,8 @@ function remindersForDate(key) {
 
 function renderHomeReminders() {
   const banner = document.querySelector("#today-reminder-banner");
-  const upcoming = document.querySelector("#reminder-upcoming");
   const dateInput = document.querySelector("#reminder-date");
-  if (!banner || !upcoming || !dateInput) return;
+  if (!banner || !dateInput) return;
   if (!dateInput.value) dateInput.value = shiftedDateKey(1);
   dateInput.min = dateKey();
 
@@ -1425,23 +1590,12 @@ function renderHomeReminders() {
     </article>
   `).join("");
 
-  const scheduled = [...(state.reminders || [])]
-    .filter((reminder) => reminder.date >= today)
-    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
-    .slice(0, 8);
-  upcoming.innerHTML = scheduled.length ? scheduled.map((reminder) => `
-    <article class="reminder-chip ${reminder.date === today ? "today" : ""}">
-      <span>${reminder.date === today ? "TODAY" : reminder.date}</span>
-      <strong>${escapeHtml(reminder.text)}</strong>
-      ${state.settings.editMode ? `<button class="terminal-action" type="button" data-reminder-remove="${reminder.id}">DEL</button>` : ""}
-    </article>
-  `).join("") : '<span class="reminder-empty">NO UPCOMING REMINDERS</span>';
 }
 
 function saveReminder() {
   const textInput = document.querySelector("#reminder-text");
   const dateInput = document.querySelector("#reminder-date");
-  const text = textInput.value.trim();
+  const text = limitedText(textInput.value, NOTE_LIMITS.reminder);
   const date = dateInput.value;
   if (!text || !date) {
     showToast(text ? "choose a reminder date" : "write the reminder");
@@ -1510,7 +1664,7 @@ function renderJournal() {
 function saveJournal() {
   state.journal[dateKey()] = {
     body: document.querySelector("#journal-body").value.trim(),
-    futureNote: document.querySelector("#future-note").value.trim(),
+    futureNote: limitedText(document.querySelector("#future-note").value, NOTE_LIMITS.future),
     savedAt: new Date().toISOString()
   };
   syncDayRecord();
@@ -1518,8 +1672,8 @@ function saveJournal() {
   renderHomeArchive();
   const saveButton = document.querySelector("#journal-form .primary-button");
   saveButton.classList.add("entry-saved");
-  scrambleText(document.querySelector("#journal-body").closest("label").querySelector("span"), "TODAY'S NOTES", 260);
-  scrambleText(document.querySelector("#future-note").closest("label").querySelector("span"), "MESSAGE FOR TOMORROW", 300);
+  scrambleText(document.querySelector("#journal-body-label"), "TODAY'S NOTES", 280);
+  scrambleText(document.querySelector("#future-note-label"), "MESSAGE FOR TOMORROW", 280);
   scrambleText(saveButton, "SAVED", 240);
   setTimeout(() => {
     saveButton.classList.remove("entry-saved");
@@ -1609,6 +1763,7 @@ function renderHomeArchive() {
       book?.classList.toggle("has-entry", progress > 0);
       book?.classList.toggle("completed", progress >= 1);
       book?.style.setProperty("--mini-fill", `${Math.round(progress * 100)}%`);
+      book?.style.setProperty("--mini-progress", progress.toFixed(3));
     });
   });
   const weeks = archiveWeekCount();
@@ -1930,11 +2085,14 @@ function renderArchive() {
             ${shelf.weeks.map((week, bookIndex) => {
               const matchingDays = query ? week.days.filter((day) => archiveDayMatches(day, query)) : [];
               const { activeDays, percent } = libraryWeekStats(week);
+              const hasSealedDay = week.days.some((day) => day.record?.archive?.status === "sealed");
+              const archiveMode = hasSealedDay ? "SEALED" : activeDays.length ? "AUTO" : "";
               const end = week.days[6].date;
               return `
-                <button type="button" class="archive-book weekly-book ${week.days.some((day) => day.key === dateKey()) ? "today-book" : ""}" data-week-key="${week.key}" data-preferred-day="${matchingDays.at(-1)?.key || activeDays.at(-1)?.key || week.key}" style="--book-height:${184 + ((bookIndex * 17 + shelfIndex * 13) % 38)}px; --completion:${percent}%; --book-index:${bookIndex}" aria-label="Open archived week ${week.key}">
+                <button type="button" class="archive-book weekly-book ${week.days.some((day) => day.key === dateKey()) ? "today-book" : ""} ${hasSealedDay ? "sealed-book" : activeDays.length ? "auto-book" : ""}" data-week-key="${week.key}" data-preferred-day="${matchingDays.at(-1)?.key || activeDays.at(-1)?.key || week.key}" style="--book-height:${184 + ((bookIndex * 17 + shelfIndex * 13) % 38)}px; --completion:${percent}%; --book-index:${bookIndex}" aria-label="Open archived week ${week.key}">
                   <span class="book-date">${formatDate(week.days[0].date, { month: "short", day: "numeric" }).toUpperCase()}—${formatDate(end, { month: "short", day: "numeric" }).toUpperCase()}</span>
-                  <span class="book-page-marks">${week.days.map((day) => `<i class="${day.record ? "recorded" : ""} ${query && archiveDayMatches(day, query) ? "matched" : ""}"></i>`).join("")}</span>
+                  <span class="book-page-marks">${week.days.map((day) => `<i class="${day.record ? "recorded" : ""} ${day.record?.archive?.status === "sealed" ? "sealed" : day.record ? "auto" : ""} ${query && archiveDayMatches(day, query) ? "matched" : ""}"></i>`).join("")}</span>
+                  ${archiveMode ? `<span class="book-archive-mode">${archiveMode}</span>` : ""}
                   <span class="book-mark">WK.${String(Math.ceil(week.days[0].date.getDate() / 7)).padStart(2, "0")}</span>
                   <span class="book-score">${percent}% // ${activeDays.length}/7</span>
                 </button>
@@ -2239,6 +2397,8 @@ function openArchivedDay(key) {
   const dialog = document.querySelector("#book-viewer");
   const checklist = record.checklist || [];
   const completed = checklist.reduce((sum, habit) => sum + (Number.isFinite(Number(habit.progress)) ? Number(habit.progress) : habit.completed ? 1 : 0), 0);
+  const archiveMeta = record.archive || {};
+  const archiveStatus = archiveMeta.status === "sealed" ? "SEALED RECORD" : "AUTO CAPTURE";
   document.querySelector("#book-viewer-title").textContent = formatDate(new Date(`${key}T12:00:00`), {
     weekday: "long",
     month: "long",
@@ -2248,7 +2408,8 @@ function openArchivedDay(key) {
   document.querySelector("#book-viewer-meta").innerHTML = `
     <span>${key}</span>
     ${checklist.length ? `<span>${Math.round(completed * 100) / 100}/${checklist.length} HABITS COMPLETE</span>` : ""}
-    <span>LOCKED RECORD</span>
+    <span>${archiveStatus}</span>
+    ${archiveMeta.updatedAt ? `<span>${archiveMeta.signalCount || 0} SIGNALS // ${new Date(archiveMeta.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>` : ""}
   `;
   document.querySelector("#book-checklist-section").hidden = !checklist.length;
   document.querySelector("#book-checklist").innerHTML = checklist.map((habit) => `
@@ -2482,7 +2643,9 @@ function numberOrNull(value) {
 }
 
 function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return min;
+  return Math.min(max, Math.max(min, numeric));
 }
 
 function normalizeCalorieEntry(entry, index = 0) {
@@ -2533,8 +2696,10 @@ function normalizeCalorieEntry(entry, index = 0) {
   };
 }
 
-function calorieEnergy(entry, target = entry?.targetKcal, maintenance = entry?.maintenanceKcal) {
-  const consumed = Math.max(0, Number(entry?.kcal) || 0);
+function calorieEnergy(entry = {}, target = entry?.targetKcal, maintenance = entry?.maintenanceKcal) {
+  const consumed = Array.isArray(entry?.meals) && entry.meals.length
+    ? entry.meals.reduce((sum, meal) => sum + Math.max(0, Number(meal?.kcal) || 0), 0)
+    : Math.max(0, Number(entry?.kcal) || 0);
   const burned = Array.isArray(entry?.activities)
     ? entry.activities.reduce((sum, activity) => sum + Math.max(0, Number(activity?.kcal) || 0), 0)
     : Math.max(0, Number(entry?.burnedKcal) || 0);
@@ -2800,7 +2965,7 @@ function renderCalories() {
     : "";
 }
 
-function calorieStatus(entry, target = entry.targetKcal, maintenance = entry.maintenanceKcal) {
+function calorieStatus(entry = {}, target = entry?.targetKcal, maintenance = entry?.maintenanceKcal) {
   const energy = calorieEnergy(entry, target, maintenance);
   const { consumed, effectiveTarget, effectiveMaintenance } = energy;
   if (!target && !maintenance) return { label: "NO TARGET", className: "calorie-neutral" };
@@ -2860,7 +3025,7 @@ function saveCalorieMeal() {
   const name = document.querySelector("#calorie-meal-name").value.trim();
   const kcal = Math.max(0, Number(document.querySelector("#calorie-meal-kcal").value) || 0);
   const protein = Math.max(0, Number(document.querySelector("#calorie-meal-protein").value) || 0);
-  const note = document.querySelector("#calorie-meal-note").value.trim();
+  const note = limitedText(document.querySelector("#calorie-meal-note").value, NOTE_LIMITS.compact);
   if (!name || !kcal) {
     showToast(name ? "add meal calories" : "name the meal");
     return;
@@ -2926,7 +3091,7 @@ function removeCalorieMeal(id) {
 function saveCalorieActivity() {
   const name = document.querySelector("#calorie-activity-name").value.trim();
   const kcal = Math.max(0, Number(document.querySelector("#calorie-activity-kcal").value) || 0);
-  const note = document.querySelector("#calorie-activity-note").value.trim();
+  const note = limitedText(document.querySelector("#calorie-activity-note").value, NOTE_LIMITS.compact);
   if (!name || !kcal) {
     showToast(name ? "add calories burned" : "name the activity");
     return;
@@ -2993,7 +3158,7 @@ function saveBodyMetric() {
     ...(existing || {}),
     id: existing?.id || `${Date.now()}`,
     date: entryDate,
-    note: document.querySelector("#body-note").value.trim()
+    note: limitedText(document.querySelector("#body-note").value, NOTE_LIMITS.standard)
   };
   BODY_FIELDS.forEach(({ key }) => {
     const input = document.querySelector(`#${BODY_INPUT_IDS[key]}`);
@@ -3190,7 +3355,7 @@ function savePr() {
   const reps = Math.max(0, Number(document.querySelector("#pr-reps").value) || 0);
   const weight = Math.max(0, Number(document.querySelector("#pr-weight").value) || 0);
   const date = dateKey();
-  const note = document.querySelector("#pr-note").value.trim();
+  const note = limitedText(document.querySelector("#pr-note").value, NOTE_LIMITS.standard);
   if (!movementInput || (!reps && !weight)) {
     showToast(!movementInput ? "type a movement" : "add max reps or weight");
     return;
@@ -3595,7 +3760,7 @@ function saveFocusLog() {
     output: document.querySelector("#focus-log-output").value.trim(),
     focusMinutes: Math.max(0, Number(document.querySelector("#focus-log-minutes").value) || 0),
     income: Math.max(0, Number(document.querySelector("#focus-log-income").value) || 0),
-    note: document.querySelector("#focus-log-note").value.trim()
+    note: limitedText(document.querySelector("#focus-log-note").value, NOTE_LIMITS.standard)
   };
   if (!entry.output) {
     showToast("describe the output");
@@ -3664,7 +3829,7 @@ function removeFocusLog(id) {
 function saveSkill() {
   const name = document.querySelector("#skill-name").value.trim();
   const progress = Math.min(100, Math.max(0, Number(document.querySelector("#skill-progress").value) || 0));
-  const note = document.querySelector("#skill-note").value.trim();
+  const note = limitedText(document.querySelector("#skill-note").value, NOTE_LIMITS.standard);
   let masteredSkillId = null;
   if (!name) {
     showToast("skill needs a name");
@@ -3944,12 +4109,12 @@ function renderSettings() {
     button.classList.toggle("active", active);
     button.setAttribute("aria-checked", String(active));
   });
-  document.querySelectorAll("[data-color-vividness]").forEach((button) => {
+  document.querySelectorAll("button[data-color-vividness]").forEach((button) => {
     const active = button.dataset.colorVividness === state.settings.colorVividness;
     button.classList.toggle("active", active);
     button.setAttribute("aria-checked", String(active));
   });
-  document.querySelectorAll("[data-gradient-strength]").forEach((button) => {
+  document.querySelectorAll("button[data-gradient-strength]").forEach((button) => {
     const active = button.dataset.gradientStrength === state.settings.gradientStrength;
     button.classList.toggle("active", active);
     button.setAttribute("aria-checked", String(active));
@@ -4068,7 +4233,7 @@ function toggleAreaVisibility(key, group) {
   } else {
     layoutAreaPressOrder[group] = layoutAreaPressOrder[group].filter((item) => item !== key);
   }
-  saveState();
+  saveState({ configFeedback: true });
   renderAreaVisibility();
   showToast(`${key} ${state.settings.areaVisibility[key] ? "shown" : "hidden"} // data preserved`);
 }
@@ -4110,7 +4275,7 @@ function toggleTabVisibility(tab) {
   } else {
     layoutTabPressOrder = layoutTabPressOrder.filter((item) => item !== tab);
   }
-  saveState();
+  saveState({ configFeedback: true });
   renderTabVisibility();
   showToast(`${tab} ${state.settings.tabVisibility[tab] ? "shown" : "hidden"} // data preserved`);
 }
@@ -4194,22 +4359,43 @@ function applyTheme(theme) {
   themeColorFrame = requestAnimationFrame(tick);
 }
 
-function clearData(button) {
-  if (!button.classList.contains("confirming")) {
-    button.classList.add("confirming");
-    button.textContent = "CONFIRM";
-    setTimeout(() => {
-      button.classList.remove("confirming");
-      button.textContent = "CLEAR";
-    }, 2500);
-    return;
-  }
+function openClearDataDialog() {
+  const dialog = document.querySelector("#clear-data-dialog");
+  if (!dialog || dialog.open) return;
+  dialog.showModal();
+  requestAnimationFrame(() => dialog.classList.add("visible"));
+  requestAnimationFrame(() => document.querySelector("#clear-data-cancel")?.focus({ preventScroll: true }));
+}
+
+function closeClearDataDialog() {
+  const dialog = document.querySelector("#clear-data-dialog");
+  if (!dialog?.open) return;
+  dialog.classList.remove("visible");
+  dialog.classList.add("closing");
+  setTimeout(() => {
+    dialog.close();
+    dialog.classList.remove("closing");
+  }, 220);
+}
+
+function clearData() {
   state = structuredClone(initialState);
   archiveWeekKeyCache = null;
   archiveSearchIndexCache.clear();
-  saveState();
-  button.classList.remove("confirming");
-  button.textContent = "CLEAR";
+  clearInterval(focusInterval);
+  clearInterval(trackInterval);
+  focusDuration = 0;
+  focusRemaining = 0;
+  focusEndAt = 0;
+  focusRunning = false;
+  focusSessionSaved = false;
+  trackStartedAt = 0;
+  trackRunning = false;
+  trackSeconds = 0;
+  Object.keys(timerRuntime).forEach((key) => delete timerRuntime[key]);
+  saveTimerRuntime();
+  saveState({ configFeedback: true });
+  closeClearDataDialog();
   renderAll();
   showToast("local data cleared");
 }
@@ -4217,7 +4403,7 @@ function clearData(button) {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 69,
+    version: 78,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -4247,6 +4433,7 @@ async function importPrivateBackup(file) {
     saveStartupSnapshot(state);
     if (durableStorageReady) await writeDurableState(state);
     else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (currentScreen === "settings") showConfigLoading();
     renderAll();
     confirmControl(document.querySelector("#import-backup"), "IMPORTED");
     showToast("private backup restored");
@@ -4377,6 +4564,33 @@ function bindEvents() {
   }));
   document.querySelector("#home-memory-portal").addEventListener("click", (event) => enterLibraryFromHome(event.currentTarget));
   document.querySelectorAll("[data-config-tab]").forEach((button) => button.addEventListener("click", () => setConfigTab(button.dataset.configTab)));
+  document.querySelector("#release-dialog-close")?.addEventListener("click", closeReleaseNotice);
+  document.querySelector("#release-dialog")?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeReleaseNotice();
+  });
+  document.querySelector("#release-dialog")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) closeReleaseNotice();
+  });
+  document.querySelector("#clear-data-cancel")?.addEventListener("click", closeClearDataDialog);
+  document.querySelector("#clear-data-confirm")?.addEventListener("click", clearData);
+  document.querySelector("#clear-data-dialog")?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeClearDataDialog();
+  });
+  document.querySelector("#clear-data-dialog")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) closeClearDataDialog();
+  });
+  document.querySelector("#archive-day-open")?.addEventListener("click", openDayArchiveDialog);
+  document.querySelector("#day-archive-cancel")?.addEventListener("click", closeDayArchiveDialog);
+  document.querySelector("#day-archive-confirm")?.addEventListener("click", archiveTodayManually);
+  document.querySelector("#day-archive-dialog")?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeDayArchiveDialog();
+  });
+  document.querySelector("#day-archive-dialog")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) closeDayArchiveDialog();
+  });
 
   document.querySelector("#habit-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -4721,21 +4935,21 @@ function bindEvents() {
 
   document.querySelector("#intro-toggle").addEventListener("click", (event) => {
     state.settings.intro = !state.settings.intro;
-    saveState();
+    saveState({ configFeedback: true });
     setToggle(event.currentTarget, state.settings.intro);
   });
 
   document.querySelector("#motion-toggle").addEventListener("click", (event) => {
     state.settings.motion = !state.settings.motion;
     if (!state.settings.motion) finishAllScrambles();
-    saveState();
+    saveState({ configFeedback: true });
     renderSettings();
     setToggle(event.currentTarget, state.settings.motion);
   });
 
   document.querySelector("#explanatory-text-toggle").addEventListener("click", () => {
     state.settings.explanatoryText = !state.settings.explanatoryText;
-    saveState();
+    saveState({ configFeedback: true });
     renderSettings();
     showToast(`explanatory text ${state.settings.explanatoryText ? "shown" : "hidden"}`);
   });
@@ -4744,7 +4958,7 @@ function bindEvents() {
     button.addEventListener("click", () => {
       if (!state.settings.editMode) return;
       state.settings.bodyFrame = button.dataset.bodyFrame === "female" ? "female" : "male";
-      saveState();
+      saveState({ configFeedback: true });
       renderSettings();
       if (currentArchiveTab === "reviews") renderWeeklyReviews();
       showToast(`${state.settings.bodyFrame} body frame selected`);
@@ -4758,7 +4972,7 @@ function bindEvents() {
       layoutAreaPressOrder = { body: [], focus: [], archive: [] };
       layoutHomeGroupPressOrder = [];
     }
-    saveState();
+    saveState({ configFeedback: true });
     renderSettings();
     renderHabits();
     renderHomeReminders();
@@ -4770,7 +4984,7 @@ function bindEvents() {
   document.querySelectorAll("[data-start-screen]").forEach((button) => {
     button.addEventListener("click", () => {
       state.settings.startScreen = button.dataset.startScreen;
-      saveState();
+      saveState({ configFeedback: true });
       renderSettings();
       showToast(`${state.settings.startScreen} set as startup area`);
     });
@@ -4783,23 +4997,23 @@ function bindEvents() {
   document.querySelectorAll("[data-theme-value]").forEach((button) => {
     button.addEventListener("click", () => {
       state.settings.theme = button.dataset.themeValue;
-      saveState();
+      saveState({ configFeedback: true });
       renderSettings();
     });
   });
 
-  document.querySelectorAll("[data-color-vividness]").forEach((button) => {
+  document.querySelectorAll("button[data-color-vividness]").forEach((button) => {
     button.addEventListener("click", () => {
       state.settings.colorVividness = button.dataset.colorVividness;
-      saveState();
+      saveState({ configFeedback: true });
       renderSettings();
     });
   });
 
-  document.querySelectorAll("[data-gradient-strength]").forEach((button) => {
+  document.querySelectorAll("button[data-gradient-strength]").forEach((button) => {
     button.addEventListener("click", () => {
       state.settings.gradientStrength = button.dataset.gradientStrength;
-      saveState();
+      saveState({ configFeedback: true });
       renderSettings();
     });
   });
@@ -4808,7 +5022,7 @@ function bindEvents() {
     button.addEventListener("click", () => toggleTabVisibility(button.dataset.tabVisibility));
   });
 
-  document.querySelector("#clear-data").addEventListener("click", (event) => clearData(event.currentTarget));
+  document.querySelector("#clear-data").addEventListener("click", openClearDataDialog);
   document.querySelector("#export-backup").addEventListener("click", exportPrivateBackup);
   document.querySelector("#import-backup").addEventListener("click", () => document.querySelector("#backup-file").click());
   document.querySelector("#backup-file").addEventListener("change", (event) => importPrivateBackup(event.currentTarget.files?.[0]));
@@ -4861,18 +5075,21 @@ function startApp() {
   }
   if (state.settings.startScreen !== "home") showScreen(state.settings.startScreen);
   const splash = document.querySelector("#splash");
+  requestAnimationFrame(() => document.documentElement.classList.remove("prebooting"));
   if (!state.settings.intro || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     splash.classList.add("hidden");
+    setTimeout(showReleaseNotice, 260);
   } else {
     startIntroSequence();
     setTimeout(() => splash.classList.add("hidden"), 1750);
+    setTimeout(showReleaseNotice, 2050);
   }
 }
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=69", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=78", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);
