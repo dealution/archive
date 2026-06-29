@@ -19531,6 +19531,422 @@ body::after {
   color: var(--accent-strong) !important;
 }
 
+/* ===== v90: phone viewport compatibility matrix ===== */
+
+@media (max-width: 760px) {
+  :root {
+    --phone-edge: clamp(10px, 3.6vw, 18px);
+    --phone-gap: clamp(6px, 2.2vw, 10px);
+    --phone-panel-pad: clamp(8px, 2.8vw, 13px);
+    --phone-topbar-h: calc(58px + env(safe-area-inset-top, 0px));
+    --phone-bottom-safe: max(18px, env(safe-area-inset-bottom, 0px));
+  }
+
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  .app-shell {
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-height: 100svh !important;
+    border-inline: 0 !important;
+  }
+
+  .topbar {
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-height: var(--phone-topbar-h) !important;
+    height: auto !important;
+    gap: var(--phone-gap) !important;
+    padding:
+      max(10px, env(safe-area-inset-top, 0px))
+      var(--phone-edge)
+      9px !important;
+    transform: none !important;
+  }
+
+  .brand,
+  .topbar-actions,
+  .topbar-access,
+  .screen-heading,
+  .panel-header,
+  .habit-item,
+  .calorie-column-label {
+    min-width: 0 !important;
+  }
+
+  .topbar-actions {
+    max-width: min(62vw, 282px);
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
+  .topbar-access {
+    min-width: 0 !important;
+    min-height: 30px !important;
+    padding-inline: clamp(4px, 1.8vw, 8px) !important;
+    white-space: nowrap;
+  }
+
+  .screen-stage {
+    min-height: 100svh !important;
+    padding:
+      calc(var(--phone-topbar-h) + 18px)
+      var(--phone-edge)
+      calc(84px + var(--phone-bottom-safe)) !important;
+  }
+
+  .screen.leaving {
+    inset: calc(var(--phone-topbar-h) + 18px) var(--phone-edge) auto !important;
+  }
+
+  .screen-heading {
+    gap: var(--phone-gap) !important;
+    margin-bottom: clamp(15px, 4.8vw, 24px) !important;
+  }
+
+  .screen-heading h1 {
+    max-width: 100%;
+    font-size: clamp(34px, 11.25vw, 48px) !important;
+    line-height: 1.04 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .heading-code {
+    flex: 0 0 auto;
+    font-size: clamp(7px, 2.3vw, 10px) !important;
+    white-space: nowrap;
+  }
+
+  .panel,
+  .home-memory,
+  .metric-card,
+  .calorie-entry-column,
+  .habit-editor-shell,
+  .book-viewer-shell,
+  .release-dialog-shell,
+  .clear-data-shell,
+  .day-archive-shell {
+    max-width: 100% !important;
+  }
+
+  .panel-header,
+  .archive-summary,
+  .body-summary,
+  .focus-summary,
+  .summary-grid,
+  .metric-grid,
+  .pr-form-grid,
+  .focus-log-grid,
+  .calorie-form-grid,
+  .home-launchpad,
+  .theme-options,
+  .color-vividness-options,
+  .gradient-strength-options,
+  .startup-options,
+  .tab-visibility-options,
+  .area-layout-options,
+  .body-frame-options {
+    min-width: 0 !important;
+  }
+
+  .summary-grid,
+  .body-summary,
+  .focus-summary,
+  .archive-summary {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)) !important;
+    gap: var(--phone-gap) !important;
+  }
+
+  .body-summary > div,
+  .focus-summary > div,
+  .summary-cell,
+  .archive-summary span {
+    min-width: 0 !important;
+    min-height: clamp(72px, 18vw, 92px) !important;
+    padding: var(--phone-panel-pad) !important;
+  }
+
+  .archive-tabs,
+  .body-tabs,
+  .focus-tabs,
+  .config-tabs,
+  .segmented-control {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+  }
+
+  .archive-tabs > button,
+  .body-tabs > button,
+  .focus-tabs > button,
+  .config-tabs > button,
+  .segmented-control > button {
+    min-width: 0 !important;
+    padding-inline: clamp(4px, 1.9vw, 10px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .journal-form,
+  .body-form,
+  .focus-form,
+  .metric-grid,
+  .pr-form-grid,
+  .focus-log-grid,
+  .calorie-form-grid {
+    max-width: 100% !important;
+  }
+
+  .journal-form > label,
+  .body-form > label,
+  .focus-form > label,
+  .metric-grid > label,
+  .pr-form-grid > label,
+  .focus-log-grid > label,
+  .calorie-form-grid > label {
+    min-width: 0 !important;
+  }
+
+  :where(.journal-form, .body-form, .focus-form, .habit-editor-shell, .archive-search, .calorie-entry-column) :where(input, textarea, select) {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .calorie-entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: start !important;
+    gap: var(--phone-gap) !important;
+  }
+
+  .calorie-entry-column .body-form {
+    height: auto !important;
+    min-height: 0 !important;
+    grid-template-rows: auto auto auto auto !important;
+  }
+
+  .calorie-entry-column .calorie-form-grid {
+    min-height: 0 !important;
+    grid-template-rows: repeat(3, minmax(64px, auto)) !important;
+    grid-auto-rows: minmax(64px, auto) !important;
+  }
+
+  #calorie-activity-form .calorie-form-grid::after {
+    min-height: 64px !important;
+  }
+
+  .home-memory {
+    min-height: clamp(150px, 43vw, 220px) !important;
+  }
+
+  .memory-shelf .mini-books {
+    max-width: 100% !important;
+    gap: clamp(3px, 1.4vw, 7px) !important;
+  }
+}
+
+@media (max-width: 374px) {
+  :root {
+    --phone-edge: 10px;
+    --phone-gap: 6px;
+    --phone-panel-pad: 8px;
+  }
+
+  .brand {
+    max-width: 104px;
+    gap: 5px !important;
+  }
+
+  .brand .prompt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-actions {
+    max-width: calc(100vw - 128px);
+    gap: 2px !important;
+  }
+
+  .topbar-access {
+    min-width: 30px !important;
+    padding-inline: 4px !important;
+  }
+
+  .topbar-access span:not(.topbar-icon) {
+    display: none;
+  }
+
+  .screen-stage {
+    padding-inline: 10px !important;
+  }
+
+  .screen-heading {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .heading-code {
+    padding-bottom: 0 !important;
+  }
+
+  .home-launchpad {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .body-tabs,
+  .focus-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .archive-tabs,
+  .config-tabs,
+  .segmented-control:not(.body-tabs):not(.focus-tabs) {
+    grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)) !important;
+  }
+
+  .metric-grid,
+  .pr-form-grid,
+  .focus-log-grid,
+  .calorie-entry-grid,
+  .calorie-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .pr-form-grid label,
+  .focus-log-grid label,
+  .metric-grid label,
+  .calorie-form-grid label {
+    grid-column: 1 / -1 !important;
+  }
+
+  .body-summary,
+  .focus-summary,
+  .summary-grid,
+  .archive-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .theme-options,
+  .color-vividness-options,
+  .gradient-strength-options,
+  .startup-options,
+  .tab-visibility-options,
+  .area-layout-options,
+  .body-frame-options,
+  .habit-type-options {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .day-options {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 375px) and (max-width: 430px) {
+  .topbar-access {
+    font-size: clamp(5px, 1.6vw, 6px) !important;
+  }
+
+  .body-tabs > button,
+  .focus-tabs > button,
+  .archive-tabs > button,
+  .config-tabs > button,
+  .segmented-control > button {
+    font-size: clamp(5px, 1.65vw, 7px) !important;
+  }
+
+  .metric-grid,
+  .focus-log-grid,
+  .calorie-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .pr-form-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(64px, .7fr) minmax(70px, .75fr) !important;
+  }
+}
+
+@media (min-width: 431px) and (max-width: 760px) {
+  .screen-stage {
+    padding-inline: clamp(18px, 5vw, 28px) !important;
+  }
+
+  .calorie-entry-grid {
+    gap: clamp(9px, 2.5vw, 14px) !important;
+  }
+
+  .home-memory {
+    min-height: clamp(190px, 38vw, 250px) !important;
+  }
+}
+
+@media (max-height: 760px) and (max-width: 430px) {
+  .screen-stage {
+    padding-top: calc(var(--phone-topbar-h) + 12px) !important;
+    padding-bottom: calc(70px + var(--phone-bottom-safe)) !important;
+  }
+
+  .screen-heading {
+    margin-bottom: 12px !important;
+  }
+
+  .home-memory {
+    min-height: clamp(124px, 38vw, 170px) !important;
+  }
+
+  .journal-form textarea,
+  .body-form textarea,
+  .focus-form textarea {
+    min-height: 86px !important;
+  }
+
+  .body-summary > div,
+  .focus-summary > div,
+  .summary-cell,
+  .archive-summary span {
+    min-height: 66px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .topbar {
+    min-height: 52px !important;
+    padding-top: max(7px, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 7px !important;
+  }
+
+  .screen-stage {
+    padding-top: calc(54px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(46px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .screen-heading {
+    align-items: flex-start !important;
+    margin-bottom: 10px !important;
+  }
+
+  .screen-heading h1 {
+    font-size: clamp(28px, 7vw, 38px) !important;
+  }
+
+  .home-memory {
+    min-height: 118px !important;
+  }
+}
+
 .habit-type-options input:checked + span small {
   color: rgba(var(--accent-rgb), .66) !important;
 }
