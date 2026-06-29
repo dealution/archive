@@ -5,16 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="color-scheme" content="dark" />
+    <meta name="msapplication-TileColor" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Archive: a focused habit, journal, and time tracker." />
     <style>
-      :root,html,body{min-height:100%;margin:0;background:#000!important;color-scheme:dark}
+      :root,html,body,#app,#splash{min-height:100%;margin:0;background:#000!important;background-color:#000!important;color-scheme:dark}
+      html{background:#000!important;background-color:#000!important}
+      html::backdrop,body::backdrop{background:#000!important}
       html.prebooting::before{content:"";position:fixed;z-index:2147483646;inset:0;background:#000;pointer-events:none}
-      body{visibility:hidden}
+      body{visibility:hidden;background:#000!important;background-color:#000!important}
       body.boot-ready{visibility:visible}
-      #splash{position:fixed;z-index:2147483647;inset:0;display:grid;place-items:center;background:#000}
+      #splash{position:fixed;z-index:2147483647;inset:0;display:grid;place-items:center;background:#000!important;background-color:#000!important}
       #splash .logo-intro{visibility:hidden}
     </style>
     <script>
@@ -52,11 +56,11 @@
         } catch {}
       })();
     </script>
-    <link rel="manifest" href="./manifest.webmanifest?v=82" />
+    <link rel="manifest" href="./manifest.webmanifest?v=87" />
     <link rel="preload" href="./app-logo.png" as="image" />
     <link rel="icon" href="./icon-192.png?v=26" type="image/png" />
     <link rel="apple-touch-icon" href="./icon-192.png?v=26" />
-    <link rel="stylesheet" href="./styles.css?v=82" />
+    <link rel="stylesheet" href="./styles.css?v=87" />
     <title>Archive</title>
   </head>
   <body class="boot-ready" style="background:#000">
@@ -784,6 +788,6 @@
     <div class="config-loading" id="config-loading" role="status" aria-live="polite">LOADING<span></span></div>
     <div class="overscroll-glow" aria-hidden="true"></div>
     <div class="toast" id="toast" role="status"></div>
-    <script src="./app.js?v=82"></script>
+    <script src="./app.js?v=87"></script>
   </body>
 </html>

@@ -1173,7 +1173,9 @@ function closeModalUnlocked(dialog) {
     return;
   }
   dialog.close();
+  syncModalLock();
   requestAnimationFrame(syncModalLock);
+  setTimeout(syncModalLock, 0);
 }
 
 function blockModalBackgroundTouch(event) {
@@ -3591,9 +3593,12 @@ function bodyAnatomyMarkup(metric, type) {
 }
 
 function bodyModelCard(metric, type, label, className = "") {
+  const d = bodyModelDimensions(metric, type);
+  const bmiLabel = Number.isFinite(d.bmi) ? d.bmi.toFixed(1) : "--";
   return `
     <article class="body-model-card ${className}">
       <header><strong>${label}</strong><span>${metric?.date || "LIVE PREVIEW"}</span></header>
+      <span class="body-model-bmi-chip" aria-label="BMI ${bmiLabel}"><small>BMI</small> <span>${bmiLabel}</span></span>
       <svg viewBox="0 0 160 265" role="img" aria-label="${label} measurement-responsive body model">
         ${bodyAnatomyMarkup(metric, type)}
       </svg>
@@ -4451,7 +4456,7 @@ function clearData() {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 82,
+    version: 87,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -5142,7 +5147,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=82", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=87", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);

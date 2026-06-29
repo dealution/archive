@@ -19846,3 +19846,448 @@ body.modal-open dialog[open] :where(button, input, textarea, select, label) {
     animation-duration: .01ms !important;
   }
 }
+
+/* ===== v83: kcal card fit, muted helper text, black first paint ===== */
+
+:root,
+html,
+body,
+#app,
+#splash {
+  background-color: #000 !important;
+}
+
+html.prebooting,
+html.prebooting body,
+html.prebooting #splash,
+.splash,
+.splash::before {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+.calorie-entry-grid {
+  align-items: stretch !important;
+}
+
+.calorie-entry-column {
+  min-width: 0 !important;
+}
+
+.calorie-entry-column .body-form {
+  display: grid !important;
+  height: 404px !important;
+  min-height: 404px !important;
+  max-height: none !important;
+  grid-template-rows: 44px 216px 78px 66px !important;
+  overflow: hidden !important;
+}
+
+.calorie-entry-column .panel-header {
+  min-height: 44px !important;
+  height: 44px !important;
+  align-items: center !important;
+  padding: 0 10px !important;
+  overflow: visible !important;
+  line-height: 1.2 !important;
+}
+
+.calorie-entry-column .panel-header > span {
+  display: block !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.calorie-entry-column .panel-header > span:first-child {
+  color: #aaa5ad !important;
+  font-size: 6px !important;
+  letter-spacing: .08em !important;
+}
+
+.calorie-entry-column .panel-header > span:last-child {
+  color: rgba(var(--accent-rgb), .52) !important;
+  font-size: 4px !important;
+  letter-spacing: .095em !important;
+}
+
+.calorie-entry-column .calorie-form-grid {
+  grid-template-rows: repeat(3, 72px) !important;
+  grid-auto-rows: 72px !important;
+  min-height: 216px !important;
+}
+
+#calorie-activity-form .calorie-form-grid::after {
+  min-height: 72px !important;
+}
+
+.calorie-entry-column .calorie-form-grid > label,
+.calorie-entry-column .body-form > label {
+  min-width: 0 !important;
+  padding: 8px !important;
+}
+
+.calorie-entry-column label > span {
+  color: #8b858e !important;
+  font-size: 6px !important;
+  font-weight: 400 !important;
+  line-height: 1.25 !important;
+  letter-spacing: .075em !important;
+}
+
+.calorie-entry-column input {
+  color: #d4d0d5 !important;
+  -webkit-text-fill-color: #d4d0d5 !important;
+}
+
+.calorie-entry-column input::placeholder,
+.calorie-entry-column textarea::placeholder {
+  color: #67616b !important;
+  -webkit-text-fill-color: #67616b !important;
+  opacity: 1 !important;
+}
+
+.calorie-column-label,
+.calorie-column-label small,
+.calorie-entry-column .body-empty span,
+.calorie-meal-card p,
+.calorie-activity-card p {
+  color: #706a74 !important;
+}
+
+@media (max-width: 560px) {
+  .calorie-entry-grid {
+    gap: 7px !important;
+  }
+
+  .calorie-entry-column .body-form {
+    height: 404px !important;
+    min-height: 404px !important;
+    grid-template-rows: 44px 216px 78px 66px !important;
+  }
+
+  .calorie-entry-column .panel-header {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding-inline: 9px !important;
+  }
+
+  .calorie-entry-column input {
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ===== v85: body BMI badge and final unified interaction grammar ===== */
+
+.body-model-card {
+  position: relative !important;
+}
+
+.body-model-bmi-chip {
+  position: absolute;
+  z-index: 3;
+  top: 42px;
+  right: 9px;
+  display: grid;
+  min-width: 31px;
+  gap: 1px;
+  padding: 4px 5px;
+  border: 1px solid rgba(var(--accent-rgb), .16);
+  background: rgba(0, 0, 0, .42);
+  color: rgba(225, 222, 228, .72);
+  font-family: var(--code-font);
+  font-size: 7px;
+  font-weight: 400;
+  letter-spacing: .03em;
+  line-height: 1;
+  text-align: right;
+  pointer-events: none;
+}
+
+.body-model-bmi-chip small {
+  color: rgba(var(--accent-rgb), .52);
+  font-size: 4px;
+  font-weight: 500;
+  letter-spacing: .11em;
+}
+
+.body-model-bmi-chip > span {
+  color: rgba(225, 222, 228, .72);
+}
+
+:where(
+  .segmented-control button,
+  .archive-tabs > button,
+  .body-tabs > button,
+  .focus-tabs > button,
+  .config-tabs > button,
+  .theme-options button,
+  .color-vividness-options button,
+  .gradient-strength-options button,
+  .startup-options button,
+  .tab-visibility-options button,
+  .area-layout-options button,
+  .home-group-control button,
+  .summary-edit-control button,
+  .body-frame-options button,
+  .habit-type-options label > span,
+  .day-options span
+) {
+  position: relative !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(var(--accent-rgb), .16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .016), rgba(0, 0, 0, .035)),
+    rgba(7, 7, 7, .86) !important;
+  color: #918b96 !important;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .026),
+    inset 0 -1px rgba(0, 0, 0, .56) !important;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) {
+  border: 1px solid rgba(var(--accent-rgb), .52) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), .13), rgba(var(--accent-rgb), .052) 58%, rgba(0, 0, 0, .08)),
+    rgba(8, 8, 8, .92) !important;
+  color: var(--accent-strong) !important;
+  box-shadow:
+    inset 0 1px rgba(var(--accent-rgb), .48),
+    inset 0 -1px rgba(var(--accent-rgb), .12),
+    0 10px 24px rgba(0, 0, 0, .18) !important;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+)::before {
+  position: absolute !important;
+  z-index: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), .72), transparent) !important;
+  content: "" !important;
+  pointer-events: none !important;
+}
+
+:where(
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.panel-header,
+.calorie-column-label,
+.habit-group-label,
+.habit-group-empty,
+.field-label-row > span:first-child,
+:where(.screen, dialog) :where(label > span, legend),
+.setting-row small,
+.theme-family-header small,
+.editor-field small,
+.terminal-note,
+.body-empty span,
+.focus-empty span,
+.archive-empty p,
+.calorie-meal-card p,
+.calorie-activity-card p {
+  font-family: var(--code-font) !important;
+}
+
+/* ===== v87: final text, checkbox, and selected-state unification ===== */
+
+:where(.screen, dialog) :where(input:not(.timer-readout-input), textarea, select),
+.archive-search input {
+  color: rgba(224, 221, 228, .86) !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: .005em !important;
+  word-spacing: normal !important;
+}
+
+:where(.screen, dialog) :where(input, textarea)::placeholder {
+  color: rgba(128, 122, 133, .62) !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-input) !important;
+  font-weight: 400 !important;
+  letter-spacing: .005em !important;
+  word-spacing: normal !important;
+}
+
+:where(.screen, dialog) :where(
+  label > span:not(.field-label-row),
+  legend,
+  .field-label-row > span:first-child,
+  .summary-label,
+  .stat-label,
+  .timer-label,
+  .calorie-column-label span,
+  .panel-header span
+) {
+  color: rgba(164, 158, 169, .8) !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-label) !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+  letter-spacing: .085em !important;
+}
+
+:where(.screen, dialog) :where(
+  small,
+  .hint,
+  .explain,
+  .terminal-note,
+  .schedule-note,
+  .habit-note,
+  .body-empty span,
+  .focus-empty span,
+  .archive-empty p,
+  .calorie-column-label small,
+  .calorie-meal-card p,
+  .calorie-activity-card p,
+  .workout-card p,
+  .project-card p,
+  .output-card p,
+  .skill-card p
+) {
+  color: rgba(142, 136, 147, .66) !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-explain) !important;
+  font-weight: 400 !important;
+  line-height: 1.45 !important;
+  letter-spacing: .025em !important;
+}
+
+:where(.screen, dialog) :where(
+  .habit-name,
+  .today-reminder-card strong,
+  .reminder-chip strong,
+  .schedule-reminder strong,
+  .schedule-card strong,
+  .project-card h3,
+  .output-card strong,
+  .skill-card strong,
+  .calorie-meal-card strong,
+  .calorie-activity-card strong,
+  .workout-card strong,
+  .book-checklist li > span:last-child,
+  .book-journal p,
+  .book-focus p
+) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: rgba(226, 223, 230, .9) !important;
+  font-family: var(--code-font) !important;
+  font-size: var(--type-user) !important;
+  font-weight: 400 !important;
+  line-height: 1.42 !important;
+  letter-spacing: .01em !important;
+  word-spacing: normal !important;
+}
+
+.habit-item {
+  overflow: hidden !important;
+}
+
+.habit-check {
+  position: relative !important;
+  width: 34px !important;
+  height: 34px !important;
+  margin: -5px 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+.habit-check::after {
+  inset: 8px !important;
+}
+
+.habit-check::before {
+  inset: 12px !important;
+}
+
+.habit-check > span {
+  inset: 8px !important;
+  color: rgba(var(--accent-rgb), .86) !important;
+  font-family: var(--code-font) !important;
+  font-size: 5px !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+body.edit-mode .habit-item {
+  grid-template-columns: 34px minmax(0, 1fr) repeat(4, 28px) !important;
+}
