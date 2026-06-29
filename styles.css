@@ -20291,3 +20291,294 @@ html.prebooting #splash,
 body.edit-mode .habit-item {
   grid-template-columns: 34px minmax(0, 1fr) repeat(4, 28px) !important;
 }
+
+/* ===== v88: universal selected highlight grammar ===== */
+
+:where(
+  .topbar-access,
+  .home-launchpad > button,
+  .segmented-control button,
+  .archive-tabs > button,
+  .body-tabs > button,
+  .focus-tabs > button,
+  .config-tabs > button,
+  .theme-options button,
+  .color-vividness-options button,
+  .gradient-strength-options button,
+  .startup-options button,
+  .tab-visibility-options button,
+  .area-layout-options button,
+  .home-group-control button,
+  .summary-edit-control button,
+  .body-frame-options button,
+  .habit-type-options label > span,
+  .day-options span
+) {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(var(--accent-rgb), .16) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .014), rgba(0, 0, 0, .045)),
+    rgba(7, 7, 7, .88) !important;
+  transition:
+    border-color .3s ease,
+    background .3s ease,
+    color .3s ease,
+    box-shadow .34s ease,
+    transform .24s cubic-bezier(.2,.72,.2,1) !important;
+}
+
+:where(
+  .topbar-access.active,
+  .home-launchpad > button.active,
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) {
+  border: 1px solid rgba(var(--accent-rgb), .58) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), .17) 0%, rgba(var(--accent-rgb), .074) 46%, rgba(0, 0, 0, .11) 100%),
+    rgba(8, 8, 8, .94) !important;
+  color: var(--accent-strong) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--accent-rgb), .075),
+    inset 0 -1px rgba(var(--accent-rgb), .14),
+    0 12px 30px rgba(0, 0, 0, .22),
+    0 0 20px rgba(var(--accent-rgb), .055) !important;
+}
+
+:where(
+  .topbar-access.active,
+  .home-launchpad > button.active,
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+)::before {
+  position: absolute !important;
+  z-index: 3 !important;
+  top: -1px !important;
+  right: -1px !important;
+  left: -1px !important;
+  display: block !important;
+  width: auto !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), .82) 48%, transparent 100%) !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), .18) !important;
+  content: "" !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  transform: none !important;
+}
+
+:where(
+  .topbar-access.active,
+  .home-launchpad > button.active,
+  .segmented-control button.active,
+  .archive-tabs > button.active,
+  .body-tabs > button.active,
+  .focus-tabs > button.active,
+  .config-tabs > button.active,
+  .theme-options button.active,
+  .theme-options button[aria-checked="true"],
+  .color-vividness-options button.active,
+  .color-vividness-options button[aria-checked="true"],
+  .gradient-strength-options button.active,
+  .gradient-strength-options button[aria-checked="true"],
+  .startup-options button.active,
+  .tab-visibility-options button.active,
+  .area-layout-options button.active,
+  .home-group-control button.active,
+  .summary-edit-control button.active,
+  .body-frame-options button.active,
+  .body-frame-options button[aria-checked="true"],
+  .habit-type-options input:checked + span,
+  .day-options input:checked + span
+) > * {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.topbar-access.active :where(span, .topbar-icon),
+.home-launchpad > button.active :where(span, strong, small),
+:where(.archive-tabs, .body-tabs, .focus-tabs, .config-tabs, .segmented-control) > button.active,
+:where(.theme-options, .color-vividness-options, .gradient-strength-options, .startup-options, .tab-visibility-options, .area-layout-options, .home-group-control, .summary-edit-control, .body-frame-options) button.active {
+  color: var(--accent-strong) !important;
+}
+
+.topbar .brand.active,
+.topbar .brand.active .prompt {
+  color: var(--accent-strong) !important;
+}
+
+.topbar .brand.active::before {
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), .24));
+}
+
+/* ===== v89: high-specificity selected states that beat legacy layers ===== */
+
+.topbar .topbar-access.active,
+.home-launchpad > button.active,
+.archive-tabs > button.active,
+.body-tabs > button.active,
+.focus-tabs > button.active,
+.segmented-control > button.active,
+.segmented-control.config-tabs > button.active,
+.config-tabs > button.active,
+.theme-options button.active,
+.theme-options button[aria-checked="true"],
+.color-vividness-options button.active,
+.color-vividness-options button[aria-checked="true"],
+.gradient-strength-options button.active,
+.gradient-strength-options button[aria-checked="true"],
+.startup-options button.active,
+.tab-visibility-options button.active,
+.area-layout-options button.active,
+.home-group-control button.active,
+.summary-edit-control button.active,
+.body-frame-options button.active,
+.body-frame-options button[aria-checked="true"],
+.habit-type-options input:checked + span,
+.day-options input:checked + span {
+  border: 1px solid rgba(var(--accent-rgb), .58) !important;
+  background:
+    linear-gradient(180deg, rgba(var(--accent-rgb), .17) 0%, rgba(var(--accent-rgb), .074) 46%, rgba(0, 0, 0, .11) 100%),
+    rgba(8, 8, 8, .94) !important;
+  color: var(--accent-strong) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--accent-rgb), .075),
+    inset 0 -1px rgba(var(--accent-rgb), .14),
+    0 12px 30px rgba(0, 0, 0, .22),
+    0 0 20px rgba(var(--accent-rgb), .055) !important;
+}
+
+.topbar .topbar-access.active::before,
+.home-launchpad > button.active::before,
+.archive-tabs > button.active::before,
+.body-tabs > button.active::before,
+.focus-tabs > button.active::before,
+.segmented-control > button.active::before,
+.segmented-control.config-tabs > button.active::before,
+.config-tabs > button.active::before,
+.theme-options button.active::before,
+.theme-options button[aria-checked="true"]::before,
+.color-vividness-options button.active::before,
+.color-vividness-options button[aria-checked="true"]::before,
+.gradient-strength-options button.active::before,
+.gradient-strength-options button[aria-checked="true"]::before,
+.startup-options button.active::before,
+.tab-visibility-options button.active::before,
+.area-layout-options button.active::before,
+.home-group-control button.active::before,
+.summary-edit-control button.active::before,
+.body-frame-options button.active::before,
+.body-frame-options button[aria-checked="true"]::before,
+.habit-type-options input:checked + span::before,
+.day-options input:checked + span::before {
+  position: absolute !important;
+  z-index: 3 !important;
+  top: -1px !important;
+  right: -1px !important;
+  left: -1px !important;
+  display: block !important;
+  width: auto !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), .82) 48%, transparent 100%) !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), .18) !important;
+  content: "" !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+  transform: none !important;
+}
+
+.topbar .topbar-access.active > *,
+.home-launchpad > button.active > *,
+.archive-tabs > button.active > *,
+.body-tabs > button.active > *,
+.focus-tabs > button.active > *,
+.segmented-control > button.active > *,
+.segmented-control.config-tabs > button.active > *,
+.config-tabs > button.active > *,
+.theme-options button.active > *,
+.theme-options button[aria-checked="true"] > *,
+.color-vividness-options button.active > *,
+.color-vividness-options button[aria-checked="true"] > *,
+.gradient-strength-options button.active > *,
+.gradient-strength-options button[aria-checked="true"] > *,
+.startup-options button.active > *,
+.tab-visibility-options button.active > *,
+.area-layout-options button.active > *,
+.home-group-control button.active > *,
+.summary-edit-control button.active > *,
+.body-frame-options button.active > *,
+.body-frame-options button[aria-checked="true"] > *,
+.habit-type-options input:checked + span > *,
+.day-options input:checked + span > * {
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.topbar .topbar-access.active :where(span, .topbar-icon),
+.home-launchpad > button.active :where(span, strong, small),
+.archive-tabs > button.active,
+.body-tabs > button.active,
+.focus-tabs > button.active,
+.segmented-control > button.active,
+.segmented-control.config-tabs > button.active,
+.config-tabs > button.active,
+.theme-options button.active,
+.theme-options button[aria-checked="true"],
+.color-vividness-options button.active,
+.color-vividness-options button[aria-checked="true"],
+.gradient-strength-options button.active,
+.gradient-strength-options button[aria-checked="true"],
+.startup-options button.active,
+.tab-visibility-options button.active,
+.area-layout-options button.active,
+.home-group-control button.active,
+.summary-edit-control button.active,
+.body-frame-options button.active,
+.body-frame-options button[aria-checked="true"],
+.habit-type-options input:checked + span,
+.day-options input:checked + span {
+  color: var(--accent-strong) !important;
+}

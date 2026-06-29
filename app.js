@@ -839,12 +839,14 @@ function openDayArchiveDialog() {
     : "No signal is recorded yet. You can still create an empty sealed day, or let Archive autosave once you add something.";
   summaryBox.innerHTML = archiveDaySummaryMarkup(summary);
   showModalLocked(dialog);
+  updateNavigationState();
   requestAnimationFrame(() => document.querySelector("#day-archive-confirm")?.focus({ preventScroll: true }));
 }
 
 function closeDayArchiveDialog() {
   const dialog = document.querySelector("#day-archive-dialog");
   closeModalUnlocked(dialog);
+  updateNavigationState();
 }
 
 function archiveTodayManually() {
@@ -1178,6 +1180,22 @@ function closeModalUnlocked(dialog) {
   setTimeout(syncModalLock, 0);
 }
 
+function updateNavigationState() {
+  document.querySelectorAll("[data-screen]").forEach((button) => {
+    const active = button.dataset.screen === currentScreen;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  const archiveDialogOpen = Boolean(document.querySelector("#day-archive-dialog")?.open);
+  const archiveAccess = document.querySelector("#archive-day-open");
+  if (archiveAccess) {
+    archiveAccess.classList.toggle("active", archiveDialogOpen);
+    archiveAccess.setAttribute("aria-pressed", String(archiveDialogOpen));
+  }
+}
+
 function blockModalBackgroundTouch(event) {
   if (!modalLockActive) return;
   const target = event.target;
@@ -1194,6 +1212,7 @@ function showScreen(name) {
       renderHomeReminders();
       renderHomeArchive();
     }
+    updateNavigationState();
     window.scrollTo({ top: 0, behavior: "auto" });
     return;
   }
@@ -1223,6 +1242,7 @@ function showScreen(name) {
     : name === "home"
       ? "CHECKLIST"
       : name.toUpperCase();
+  updateNavigationState();
 
   if (name === "archive") renderArchive();
   if (name === "journal") renderJournal();
@@ -4456,7 +4476,7 @@ function clearData() {
 function exportPrivateBackup() {
   const payload = {
     app: "Archive",
-    version: 87,
+    version: 89,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -4511,6 +4531,7 @@ function renderAll() {
   renderBody();
   renderFocus();
   renderSettings();
+  updateNavigationState();
 }
 
 function renderHabitSelectors() {
@@ -5147,7 +5168,7 @@ function startApp() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js?v=87", { updateViaCache: "none" });
+      const registration = await navigator.serviceWorker.register("./sw.js?v=89", { updateViaCache: "none" });
       registration.update();
     } catch (error) {
       console.warn("Service worker registration skipped.", error);
